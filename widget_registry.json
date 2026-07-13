@@ -1,0 +1,133 @@
+{
+  "widgets": [
+    {
+      "category": "Demo",
+      "configuration": {
+        "properties": [
+          {
+            "name": "title",
+            "type": "text",
+            "label": "Title",
+            "defaultValue": "Angular Widget",
+            "rules": {
+              "required": true
+            }
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "label": "Description",
+            "defaultValue": "A widget built with Angular and bundled using esbuild."
+          }
+        ]
+      },
+      "containers": ["Full width"],
+      "defaultConfig": {
+        "title": "Angular Widget",
+        "description": "A widget built with Angular and bundled using esbuild."
+      },
+      "description": "An Angular standalone component widget bundled with esbuild",
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": false
+      },
+      "title": "Angular esbuild Widget",
+      "version": "1.0.0",
+      "widgetsLibrary": true,
+      "type": "angular_esbuild_widget",
+      "source": {
+        "path": "widgets/angular_esbuild_widget/dist",
+        "entry": "index.html"
+      }
+    },
+    {
+      "category": "Demo",
+      "configuration": {
+        "properties": [
+          {
+            "name": "title",
+            "type": "text",
+            "label": "Title",
+            "defaultValue": "Webpack Widget",
+            "rules": {
+              "required": true
+            }
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "label": "Description",
+            "defaultValue": "A widget built with React, webpack, and styled-components."
+          }
+        ]
+      },
+      "containers": ["Full width"],
+      "defaultConfig": {
+        "title": "Webpack Widget",
+        "description": "A widget built with React, webpack, and styled-components."
+      },
+      "description": "A React widget built with webpack and styled-components",
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": false
+      },
+      "title": "React Webpack Widget",
+      "version": "1.0.0",
+      "widgetsLibrary": true,
+      "type": "react_webpack_widget",
+      "source": {
+        "path": "widgets/react_webpack_widget/dist",
+        "entry": "index.html"
+      }
+    },
+    {
+      "category": "Demo",
+      "configuration": {
+        "properties": [
+          {
+            "name": "title",
+            "type": "text",
+            "label": "Title",
+            "defaultValue": "React Widget",
+            "rules": {
+              "required": true
+            }
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "label": "Description",
+            "defaultValue": "A widget built with React and the Widget SDK."
+          }
+        ]
+      },
+      "containers": ["Full width"],
+      "defaultConfig": {
+        "title": "React Widget",
+        "description": "A widget built with React and the Widget SDK."
+      },
+      "description": "A React widget using the ESM module pattern with Widget SDK",
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": false
+      },
+      "title": "React Widget",
+      "version": "1.0.0",
+      "widgetsLibrary": true,
+      "type": "react_widget",
+      "source": {
+        "path": "widgets/react_widget/dist",
+        "entry": "index.html"
+      }
+    }
+  ]
+}
