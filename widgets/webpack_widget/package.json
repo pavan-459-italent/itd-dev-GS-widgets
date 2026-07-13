@@ -1,0 +1,19 @@
+{
+  "name": "webpack-widget",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "lsof -ti:5300 | xargs kill -9 2>/dev/null; webpack serve --config webpack.config.cjs",
+    "build": "webpack --config webpack.config.cjs --mode=production"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^12.0.0",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.9.3",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.0",
+    "webpack-dev-server": "^5.2.0"
+  },
+  "packageManager": "yarn@1.22.22"
+}

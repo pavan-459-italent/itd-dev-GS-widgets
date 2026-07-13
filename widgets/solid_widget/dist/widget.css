@@ -1,0 +1,25 @@
+.solid-widget-section {
+  padding: 2rem;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2c4f7c 0%, #0ea5e9 100%);
+  color: #ffffff;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.solid-widget-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.solid-widget-description {
+  margin: 0.75rem 0 0;
+  font-size: 1rem;
+  opacity: 0.85;
+  line-height: 1.6;
+}

@@ -1,0 +1,25 @@
+.bun-widget-section {
+  padding: 2rem;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fbf0df 0%, #f9bc62 100%);
+  color: #3d2a0a;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bun-widget-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.bun-widget-description {
+  margin: 0.75rem 0 0;
+  font-size: 1rem;
+  opacity: 0.85;
+  line-height: 1.6;
+}

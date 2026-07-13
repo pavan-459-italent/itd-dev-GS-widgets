@@ -1,0 +1,14 @@
+import { defineConfig } from "vite";
+import solid from "vite-plugin-solid";
+
+export default defineConfig({
+  plugins: [solid()],
+  server: { port: 5177, strictPort: true },
+  build: {
+    lib: {
+      entry: "src/main.tsx",
+      formats: ["es"],
+      fileName: "widget",
+    },
+  },
+});

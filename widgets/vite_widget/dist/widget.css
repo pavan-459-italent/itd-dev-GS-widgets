@@ -1,0 +1,25 @@
+.vite-widget-section {
+  padding: 2rem;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #bd34fe 0%, #ff3d00 100%);
+  color: #ffffff;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.vite-widget-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.vite-widget-description {
+  margin: 0.75rem 0 0;
+  font-size: 1rem;
+  opacity: 0.85;
+  line-height: 1.6;
+}

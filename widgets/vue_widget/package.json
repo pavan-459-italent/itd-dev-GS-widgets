@@ -1,0 +1,20 @@
+{
+  "name": "vue-widget",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "lsof -ti:5175 | xargs kill -9 2>/dev/null; vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.2.0",
+    "vue-tsc": "^2.2.0"
+  },
+  "packageManager": "npm@10.9.2"
+}

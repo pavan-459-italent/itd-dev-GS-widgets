@@ -1,0 +1,15 @@
+{
+  "name": "bun-widget",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "lsof -ti:5451 | xargs kill -9 2>/dev/null; bun run dev.ts",
+    "build": "bun run build.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/bun": "latest"
+  },
+  "packageManager": "bun@1.3.9"
+}
