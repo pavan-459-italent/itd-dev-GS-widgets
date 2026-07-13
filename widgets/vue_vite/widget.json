@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "title": "Vue Widget",
+  "description": "A widget built with Vue 3 and Vite",
+  "category": "Demo",
+  "imageSrc": "thumbnail.png",
+  "configuration": {
+    "properties": [
+      {
+        "name": "title",
+        "type": "text",
+        "label": "Title",
+        "defaultValue": "Vue Widget",
+        "rules": { "required": true }
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "label": "Description",
+        "defaultValue": "A widget built with Vue 3 and Vite."
+      }
+    ]
+  },
+  "defaultConfig": {
+    "title": "Vue Widget",
+    "description": "A widget built with Vue 3 and Vite."
+  }
+}

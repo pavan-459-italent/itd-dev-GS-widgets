@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "title": "React + webpack Widget",
+  "description": "A widget built with React 19 and webpack 5",
+  "category": "Demo",
+  "imageSrc": "thumbnail.png",
+  "configuration": {
+    "properties": [
+      {
+        "name": "title",
+        "type": "text",
+        "label": "Title",
+        "defaultValue": "React + webpack Widget",
+        "rules": { "required": true }
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "label": "Description",
+        "defaultValue": "A widget built with React 19 and webpack 5."
+      }
+    ]
+  },
+  "defaultConfig": {
+    "title": "React + webpack Widget",
+    "description": "A widget built with React 19 and webpack 5."
+  }
+}
