@@ -1,0 +1,5 @@
+---
+description: Always use yarn instead of NPM. In a monorepo use yarn workspace or turbo.
+globs:
+alwaysApply: true
+---

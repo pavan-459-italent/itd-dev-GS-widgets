@@ -1,0 +1,92 @@
+{
+  "widgets": [
+    {
+      "version": "1.0.0",
+      "title": "Bundled React Test",
+      "type": "bundled_react_test",
+      "description": "Tests Vite-bundled React code with code splitting and asset references",
+      "category": "Path Tests",
+      "containers": [
+        "Full width"
+      ],
+      "widgetsLibrary": true,
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": true
+      },
+      "source": {
+        "path": "widgets/bundled_react_test/dist",
+        "entry": "content.html"
+      }
+    },
+    {
+      "version": "1.0.0",
+      "title": "CSS Paths Test",
+      "type": "css_paths_test",
+      "description": "Tests CSS path mechanisms including url(), @import, @font-face, and image-set()",
+      "category": "Path Tests",
+      "containers": [
+        "Full width"
+      ],
+      "widgetsLibrary": true,
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": true
+      },
+      "source": {
+        "path": "widgets/css_paths_test/dist",
+        "entry": "content.html"
+      }
+    },
+    {
+      "version": "1.0.0",
+      "title": "HTML Paths Test",
+      "type": "html_paths_test",
+      "description": "Tests HTML attribute path references that need CDN URL rewriting",
+      "category": "Path Tests",
+      "containers": [
+        "Full width"
+      ],
+      "widgetsLibrary": true,
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": true
+      },
+      "source": {
+        "path": "widgets/html_paths_test/dist",
+        "entry": "content.html"
+      }
+    },
+    {
+      "version": "1.0.0",
+      "title": "JavaScript Paths Test",
+      "type": "js_paths_test",
+      "description": "Tests JavaScript runtime path references including fetch(), import(), Worker, etc.",
+      "category": "Path Tests",
+      "containers": [
+        "Full width"
+      ],
+      "widgetsLibrary": true,
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": true
+      },
+      "source": {
+        "path": "widgets/js_paths_test/dist",
+        "entry": "content.html"
+      }
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+---
+description: Simplify single-statement waitFor callbacks - use arrow function without braces when there's only one statement inside.
+alwaysApply: true
+---

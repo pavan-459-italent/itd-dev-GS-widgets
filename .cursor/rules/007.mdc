@@ -1,0 +1,5 @@
+---
+description: name all test files based on the file they're testing. so for index.tsx it's index.test.tsx, not Component.test.tsx
+globs:
+alwaysApply: true
+---

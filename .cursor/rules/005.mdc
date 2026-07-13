@@ -1,0 +1,5 @@
+---
+description: Make sure to run the inspect command (linters etc) from related package.json before finishing the command.
+globs:
+alwaysApply: true
+---

@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "title": "JavaScript Paths Test",
+  "description": "Tests JavaScript runtime path references including fetch(), import(), Worker, etc.",
+  "category": "Path Tests"
+}

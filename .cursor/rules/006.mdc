@@ -1,0 +1,5 @@
+---
+description: prefer getByRole and using accessibile roles instead of data-test attributes for fetching elements in tests
+globs:
+alwaysApply: true
+---

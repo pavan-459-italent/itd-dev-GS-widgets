@@ -1,0 +1,4 @@
+---
+description: Use yarn workspace to run the inspect script before finishing each command. Here's an example: yarn workspace @gainsight-customer-hub/widget-service-frontend inspect.
+alwaysApply: true
+---

@@ -1,0 +1,8 @@
+{
+  "apiUrl": "https://api.example.com",
+  "theme": "light",
+  "features": {
+    "darkMode": true,
+    "notifications": false
+  }
+}

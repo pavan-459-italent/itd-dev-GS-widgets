@@ -1,0 +1,12 @@
+.external-styles-loaded {
+  color: green;
+  font-weight: bold;
+}
+
+.card-with-external-bg {
+  background-image: url('./pattern.svg');
+  background-size: 20px 20px;
+  min-height: 60px;
+  padding: 16px;
+  border-radius: 8px;
+}

@@ -1,0 +1,5 @@
+{
+  "message": "Runtime fetch successful in React widget",
+  "source": "assets/data.json",
+  "note": "This file is fetched at runtime, not bundled"
+}

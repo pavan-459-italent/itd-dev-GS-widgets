@@ -1,0 +1,5 @@
+---
+description: If for some reason you added a comment, make sure to remove it before finishing the task. People's lives depend on this. Please, for the love of God, be absolutely sure there's not a single line of comment in the produced code.
+globs:
+alwaysApply: true
+---

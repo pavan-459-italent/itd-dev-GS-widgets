@@ -1,0 +1,5 @@
+---
+description: If component gets too complex, extract smaller components out of it. Also, when implementing a bigger custom hook, extract it to ./hooks file.
+globs:
+alwaysApply: true
+---

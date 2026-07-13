@@ -1,0 +1,5 @@
+---
+description: Don't use // eslint-disable-next-line @typescript-eslint/no-unused-vars for fixing linter and TS errors.
+globs:
+alwaysApply: true
+---

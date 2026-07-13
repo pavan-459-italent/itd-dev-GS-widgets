@@ -1,0 +1,210 @@
+<link rel="stylesheet" href="assets/external.css">
+
+<style>
+  @import './assets/imported.css';
+
+  .css-paths-widget {
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 20px;
+  }
+
+  .test-section {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+
+  .test-section h3 {
+    margin: 0 0 12px 0;
+    color: #374151;
+    font-size: 14px;
+  }
+
+  code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .test-1-background {
+    background-image: url('./assets/background.svg');
+    background-size: cover;
+    min-height: 80px;
+    padding: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .test-2-list {
+    list-style-image: url('./assets/bullet.svg');
+    padding-left: 24px;
+  }
+
+  .test-2-list li {
+    padding: 4px 0;
+  }
+
+  .test-3-cursor {
+    cursor: url('./assets/cursor.svg'), pointer;
+    padding: 16px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .test-4-border {
+    border: 10px solid transparent;
+    border-image: url('./assets/border.svg') 10 round;
+    padding: 16px;
+  }
+
+  .test-5-content::before {
+    content: url('./assets/check.svg');
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .test-6-mask {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    mask-image: url('./assets/mask.svg');
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-image: url('./assets/mask.svg');
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    width: 100px;
+    height: 100px;
+  }
+
+  .test-7-imageset {
+    background-image: image-set(
+      './assets/background.svg' 1x,
+      './assets/background.svg' 2x
+    );
+    background-image: -webkit-image-set(
+      url('./assets/background.svg') 1x,
+      url('./assets/background.svg') 2x
+    );
+    min-height: 60px;
+    border-radius: 8px;
+  }
+
+  .test-8-multiple-bg {
+    background-image:
+      url('./assets/bullet.svg'),
+      url('./assets/pattern.svg');
+    background-position: 10px 10px, 0 0;
+    background-repeat: no-repeat, repeat;
+    background-size: 16px 16px, 20px 20px;
+    min-height: 80px;
+    border-radius: 8px;
+  }
+
+  .test-9-shorthand {
+    background: url('./assets/pattern.svg') repeat top left / 20px 20px;
+    min-height: 60px;
+    border-radius: 8px;
+  }
+
+  .inline-indicator {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+</style>
+
+<div class="css-paths-widget">
+  <h2>CSS Paths Test Widget</h2>
+  <p>This widget tests various CSS path mechanisms.</p>
+
+  <div class="test-section">
+    <h3>1. background-image: url() <span class="inline-indicator">INLINE CSS</span></h3>
+    <div class="test-1-background">
+      <span>Background from ./assets/background.svg</span>
+    </div>
+    <code>background-image: url('./assets/background.svg')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>2. list-style-image: url() <span class="inline-indicator">INLINE CSS</span></h3>
+    <ul class="test-2-list">
+      <li>Custom bullet from ./assets/bullet.svg</li>
+      <li>Another list item</li>
+      <li>Third list item</li>
+    </ul>
+    <code>list-style-image: url('./assets/bullet.svg')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>3. cursor: url() <span class="inline-indicator">INLINE CSS</span></h3>
+    <div class="test-3-cursor">
+      Hover here to see custom cursor (./assets/cursor.svg)
+    </div>
+    <code>cursor: url('./assets/cursor.svg'), pointer</code>
+  </div>
+
+  <div class="test-section">
+    <h3>4. border-image: url() <span class="inline-indicator">INLINE CSS</span></h3>
+    <div class="test-4-border">
+      Border image from ./assets/border.svg
+    </div>
+    <code>border-image: url('./assets/border.svg') 10 round</code>
+  </div>
+
+  <div class="test-section">
+    <h3>5. content: url() <span class="inline-indicator">INLINE CSS</span></h3>
+    <p class="test-5-content">This text has a check icon before it</p>
+    <code>content: url('./assets/check.svg')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>6. mask-image: url() <span class="inline-indicator">INLINE CSS</span></h3>
+    <div class="test-6-mask"></div>
+    <p>Circular mask from ./assets/mask.svg applied to gradient</p>
+    <code>mask-image: url('./assets/mask.svg')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>7. image-set() with bare strings <span class="inline-indicator">INLINE CSS</span></h3>
+    <div class="test-7-imageset"></div>
+    <p>Background using image-set() with bare string paths</p>
+    <code>image-set('./assets/background.svg' 1x, './assets/background.svg' 2x)</code>
+  </div>
+
+  <div class="test-section">
+    <h3>8. Multiple backgrounds with url() <span class="inline-indicator">INLINE CSS</span></h3>
+    <div class="test-8-multiple-bg"></div>
+    <code>background-image: url('./assets/bullet.svg'), url('./assets/pattern.svg')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>9. Background shorthand with url() <span class="inline-indicator">INLINE CSS</span></h3>
+    <div class="test-9-shorthand"></div>
+    <code>background: url('./assets/pattern.svg') repeat top left / 20px 20px</code>
+  </div>
+
+  <div class="test-section">
+    <h3>10. @import in inline style <span class="inline-indicator">INLINE CSS</span></h3>
+    <p class="imported-styles-loaded">If this has green background, @import worked</p>
+    <code>@import './assets/imported.css'</code>
+  </div>
+
+  <div class="test-section">
+    <h3>11. External CSS file with url()</h3>
+    <p class="external-styles-loaded">If this text is green and bold, external CSS loaded.</p>
+    <div class="card-with-external-bg">
+      <p>This card has a background defined in external.css using url('./pattern.svg')</p>
+    </div>
+    <code>&lt;link href="./assets/external.css"&gt; + url('./pattern.svg') inside</code>
+    <p><small>Note: External CSS url() paths resolve relative to the CSS file, so they should work if the CSS file is served correctly.</small></p>
+  </div>
+</div>
