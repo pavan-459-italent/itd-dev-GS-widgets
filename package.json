@@ -1,0 +1,20 @@
+{
+  "name": "widgets-repository",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "host": "tsx bin/host/index.ts"
+  },
+  "dependencies": {
+    "@inquirer/checkbox": "^3",
+    "chalk": "^5",
+    "execa": "^9",
+    "ora": "^8",
+    "strip-ansi": "^7"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}
