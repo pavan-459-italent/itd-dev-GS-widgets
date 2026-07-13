@@ -1,0 +1,27 @@
+{
+  "version": "1.1.0",
+  "title": "Localized Widget",
+  "description": "A multi-language widget with automatic locale discovery using the Widget SDK. Detects the user's language and renders localized content.",
+  "category": "Content",
+  "imageSrc": "thumbnail.png",
+  "source": {
+    "path": "dist",
+    "entry": "index.html"
+  },
+  "settings": {
+    "configurable": true
+  },
+  "configuration": {
+    "properties": [
+      {
+        "name": "accent_color",
+        "type": "color",
+        "label": "Accent Color",
+        "defaultValue": "#6366f1"
+      }
+    ]
+  },
+  "defaultConfig": {
+    "accent_color": "#6366f1"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "widgets": [
+    {
+      "category": "Content",
+      "configuration": {
+        "properties": [
+          {
+            "name": "accent_color",
+            "type": "color",
+            "label": "Accent Color",
+            "defaultValue": "#6366f1"
+          }
+        ]
+      },
+      "containers": [
+        "Full width"
+      ],
+      "defaultConfig": {
+        "accent_color": "#6366f1"
+      },
+      "description": "A multi-language widget with automatic locale discovery using the Widget SDK. Detects the user's language and renders localized content.",
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "movable": false,
+        "removable": true,
+        "shared": false
+      },
+      "title": "Localized Widget",
+      "version": "1.1.0",
+      "widgetsLibrary": true,
+      "type": "localized_widget",
+      "source": {
+        "path": "widgets/localized_widget/dist",
+        "entry": "index.html"
+      },
+      "imageSrc": "widgets/localized_widget/thumbnail.png"
+    }
+  ]
+}
