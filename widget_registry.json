@@ -1,0 +1,90 @@
+{
+  "widgets": [
+    {
+      "category": "Local Preview",
+      "configuration": {
+        "properties": [
+          {
+            "name": "title",
+            "type": "text",
+            "label": "Title",
+            "defaultValue": "React Widget",
+            "rules": {
+              "required": true
+            }
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "label": "Description",
+            "defaultValue": "A widget built with React and the Widget SDK."
+          }
+        ]
+      },
+      "containers": [
+        "Full width"
+      ],
+      "defaultConfig": {
+        "title": "React Widget",
+        "description": "A widget built with React and the Widget SDK."
+      },
+      "description": "A React widget using the ESM module pattern with Widget SDK",
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": false
+      },
+      "title": "React Widget (Local Preview)",
+      "version": "1.0.0",
+      "widgetsLibrary": true,
+      "type": "react_widget",
+      "content": {
+        "endpoint": "https://3015-193-28-84-134.ngrok-free.app/",
+        "method": "GET",
+        "requiresAuthentication": false,
+        "cacheStrategy": "none"
+      },
+      "imageSrc": "widgets/react_widget/thumbnail.png"
+    },
+    {
+      "category": "Local Preview",
+      "configuration": {
+        "properties": [
+          {
+            "name": "label",
+            "type": "text",
+            "label": "Label",
+            "defaultValue": "Styled Widget"
+          }
+        ]
+      },
+      "containers": [
+        "Full width"
+      ],
+      "defaultConfig": {
+        "label": "Styled Widget"
+      },
+      "description": "A React widget using styled-components",
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": false
+      },
+      "title": "Styled Widget (Local Preview)",
+      "version": "1.0.0",
+      "widgetsLibrary": true,
+      "type": "styled_widget",
+      "content": {
+        "endpoint": "http://localhost:5174",
+        "method": "GET",
+        "requiresAuthentication": false,
+        "cacheStrategy": "none"
+      },
+      "imageSrc": "widgets/react_widget/thumbnail.png"
+    }
+  ]
+}
