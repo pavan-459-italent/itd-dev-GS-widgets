@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "title": "Bundled React Test",
+  "description": "Tests Vite-bundled React code with code splitting and asset references",
+  "category": "Path Tests"
+}

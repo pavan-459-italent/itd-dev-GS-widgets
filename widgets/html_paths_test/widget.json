@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "title": "HTML Paths Test",
+  "description": "Tests HTML attribute path references that need CDN URL rewriting",
+  "category": "Path Tests"
+}

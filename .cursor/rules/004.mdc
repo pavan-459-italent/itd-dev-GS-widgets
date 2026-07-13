@@ -1,0 +1,5 @@
+---
+description: Extract shared strings to ./constants file. Reuse those constants for TS types.
+globs:
+alwaysApply: true
+---

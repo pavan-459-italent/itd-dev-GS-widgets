@@ -1,0 +1,115 @@
+<link rel="stylesheet" href="./assets/styles.css">
+
+<style>
+  .html-paths-widget {
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 20px;
+  }
+  .test-section {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+  .test-section h3 {
+    margin: 0 0 12px 0;
+    color: #374151;
+  }
+  .status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .status-pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+</style>
+
+<div class="html-paths-widget">
+  <h2>HTML Paths Test Widget</h2>
+  <p>This widget tests various HTML attributes that reference external files.</p>
+
+  <div class="test-section">
+    <h3>1. Link href (External CSS)</h3>
+    <p class="external-css-loaded">If this text is green and bold, external CSS loaded.</p>
+    <code>&lt;link rel="stylesheet" href="./assets/styles.css"&gt;</code>
+  </div>
+
+  <div class="test-section">
+    <h3>2. Script src (External JS)</h3>
+    <p id="external-js-indicator" class="status status-pending">Waiting for external JS...</p>
+    <code>&lt;script src="./assets/script.js"&gt;</code>
+  </div>
+
+  <div class="test-section">
+    <h3>3. Img src</h3>
+    <img src="./assets/logo.svg" alt="Logo" width="100" height="40">
+    <br><code>&lt;img src="./assets/logo.svg"&gt;</code>
+  </div>
+
+  <div class="test-section">
+    <h3>4. Img srcset</h3>
+    <img
+      src="./assets/logo.svg"
+      srcset="./assets/logo.svg 1x, ./assets/logo.svg 2x"
+      alt="Logo with srcset"
+      width="100"
+      height="40"
+    >
+    <br><code>&lt;img srcset="./assets/logo.svg 1x, ./assets/logo.svg 2x"&gt;</code>
+  </div>
+
+  <div class="test-section">
+    <h3>5. Picture / Source</h3>
+    <picture>
+      <source srcset="./assets/logo.svg" type="image/svg+xml">
+      <img src="./assets/logo.svg" alt="Picture element test" width="100" height="40">
+    </picture>
+    <br><code>&lt;source srcset="./assets/logo.svg"&gt;</code>
+  </div>
+
+  <div class="test-section">
+    <h3>6. SVG use href</h3>
+    <svg width="24" height="24">
+      <use href="./assets/icon.svg#icon"></use>
+    </svg>
+    <br><code>&lt;use href="./assets/icon.svg#icon"&gt;</code>
+    <p><small>Note: SVG use with external file has limited browser support</small></p>
+  </div>
+
+  <div class="test-section">
+    <h3>7. Object data</h3>
+    <object data="./assets/icon.svg" type="image/svg+xml" width="24" height="24">
+      Fallback text
+    </object>
+    <br><code>&lt;object data="./assets/icon.svg"&gt;</code>
+  </div>
+
+  <div class="test-section">
+    <h3>8. Embed src</h3>
+    <embed src="./assets/icon.svg" type="image/svg+xml" width="24" height="24">
+    <br><code>&lt;embed src="./assets/icon.svg"&gt;</code>
+  </div>
+
+  <div class="test-section">
+    <h3>9. Iframe src</h3>
+    <iframe src="./assets/nested.html" width="300" height="60" style="border: 1px solid #ccc;"></iframe>
+    <br><code>&lt;iframe src="./assets/nested.html"&gt;</code>
+  </div>
+
+  <div class="test-section">
+    <h3>10. Link preload</h3>
+    <link rel="preload" href="./assets/module.js" as="script">
+    <p>Preload link added (check Network tab)</p>
+    <code>&lt;link rel="preload" href="./assets/module.js" as="script"&gt;</code>
+  </div>
+
+  <div class="test-section">
+    <h3>11. Anchor href (relative page)</h3>
+    <a href="./assets/nested.html" target="_blank">Open nested.html</a>
+    <br><code>&lt;a href="./assets/nested.html"&gt;</code>
+  </div>
+</div>
+
+<script src="./assets/script.js"></script>

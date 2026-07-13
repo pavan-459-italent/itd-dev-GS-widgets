@@ -1,0 +1,4 @@
+---
+description: Extract TS types to separate ./types.ts files.
+alwaysApply: true
+---

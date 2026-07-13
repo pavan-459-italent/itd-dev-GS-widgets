@@ -1,0 +1,9 @@
+{
+  "message": "Data loaded successfully via fetch()",
+  "timestamp": "2024-01-01T00:00:00Z",
+  "items": [
+    { "id": 1, "name": "Item One" },
+    { "id": 2, "name": "Item Two" },
+    { "id": 3, "name": "Item Three" }
+  ]
+}

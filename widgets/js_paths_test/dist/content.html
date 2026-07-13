@@ -1,0 +1,351 @@
+<style>
+  .js-paths-widget {
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 20px;
+  }
+
+  .test-section {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+
+  .test-section h3 {
+    margin: 0 0 12px 0;
+    color: #374151;
+    font-size: 14px;
+  }
+
+  code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: block;
+    margin-top: 8px;
+  }
+
+  .result {
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .result-pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .result-success {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .result-error {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .test-button {
+    padding: 8px 16px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .test-button:hover {
+    background: #2563eb;
+  }
+
+  .test-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .js-image-container {
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .category-label {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+
+  .category-static {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .category-dynamic {
+    background: #fce7f3;
+    color: #9d174d;
+  }
+</style>
+
+<div class="js-paths-widget">
+  <h2>JavaScript Paths Test Widget</h2>
+  <p>This widget tests JavaScript runtime path references. Click buttons to run tests.</p>
+  <p><small><strong>Legend:</strong>
+    <span class="category-label category-static">STATIC</span> = CLI can transform |
+    <span class="category-label category-dynamic">DYNAMIC</span> = Needs runtime helper
+  </small></p>
+
+  <div class="test-section">
+    <h3>1. fetch() with static string <span class="category-label category-static">STATIC</span></h3>
+    <button class="test-button" onclick="testFetchStatic()">Run Test</button>
+    <div id="result-fetch-static" class="result result-pending">Click button to test...</div>
+    <code>fetch('./assets/data.json')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>2. fetch() with dynamic string <span class="category-label category-dynamic">DYNAMIC</span></h3>
+    <button class="test-button" onclick="testFetchDynamic()">Run Test</button>
+    <div id="result-fetch-dynamic" class="result result-pending">Click button to test...</div>
+    <code>const file = 'config'; fetch('./assets/' + file + '.json')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>3. fetch() with template literal <span class="category-label category-dynamic">DYNAMIC</span></h3>
+    <button class="test-button" onclick="testFetchTemplate()">Run Test</button>
+    <div id="result-fetch-template" class="result result-pending">Click button to test...</div>
+    <code>const name = 'data'; fetch(`./assets/${name}.json`)</code>
+  </div>
+
+  <div class="test-section">
+    <h3>4. Dynamic import() <span class="category-label category-static">STATIC</span></h3>
+    <button class="test-button" onclick="testDynamicImport()">Run Test</button>
+    <div id="result-dynamic-import" class="result result-pending">Click button to test...</div>
+    <code>import('./assets/module.js')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>5. new Worker() <span class="category-label category-static">STATIC</span></h3>
+    <button class="test-button" onclick="testWorker()">Run Test</button>
+    <div id="result-worker" class="result result-pending">Click button to test...</div>
+    <code>new Worker('./assets/worker.js')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>6. new Image().src assignment <span class="category-label category-static">STATIC</span></h3>
+    <button class="test-button" onclick="testImageConstructor()">Run Test</button>
+    <div id="result-image-constructor" class="result result-pending js-image-container">Click button to test...</div>
+    <code>const img = new Image(); img.src = './assets/image.svg'</code>
+  </div>
+
+  <div class="test-section">
+    <h3>7. Element.src assignment <span class="category-label category-static">STATIC</span></h3>
+    <button class="test-button" onclick="testElementSrc()">Run Test</button>
+    <div id="result-element-src" class="result result-pending js-image-container">
+      <img id="test-img-element" alt="Test image" style="display:none; width: 100px; height: 100px;">
+      <span>Click button to test...</span>
+    </div>
+    <code>document.getElementById('img').src = './assets/image.svg'</code>
+  </div>
+
+  <div class="test-section">
+    <h3>8. new URL() with relative path <span class="category-label category-static">STATIC</span></h3>
+    <button class="test-button" onclick="testNewURL()">Run Test</button>
+    <div id="result-new-url" class="result result-pending">Click button to test...</div>
+    <code>new URL('./assets/data.json', window.location.href)</code>
+  </div>
+
+  <div class="test-section">
+    <h3>9. XMLHttpRequest <span class="category-label category-static">STATIC</span></h3>
+    <button class="test-button" onclick="testXHR()">Run Test</button>
+    <div id="result-xhr" class="result result-pending">Click button to test...</div>
+    <code>xhr.open('GET', './assets/data.json')</code>
+  </div>
+
+  <div class="test-section">
+    <h3>10. Path stored in variable <span class="category-label category-dynamic">DYNAMIC</span></h3>
+    <button class="test-button" onclick="testVariablePath()">Run Test</button>
+    <div id="result-variable-path" class="result result-pending">Click button to test...</div>
+    <code>const path = './assets/data.json'; fetch(path)</code>
+  </div>
+
+  <div class="test-section">
+    <h3>11. Path from config object <span class="category-label category-dynamic">DYNAMIC</span></h3>
+    <button class="test-button" onclick="testConfigPath()">Run Test</button>
+    <div id="result-config-path" class="result result-pending">Click button to test...</div>
+    <code>const config = { dataPath: './assets/data.json' }; fetch(config.dataPath)</code>
+  </div>
+</div>
+
+<script>
+  function setResult(id, success, message) {
+    var el = document.getElementById(id);
+    el.className = 'result ' + (success ? 'result-success' : 'result-error');
+    el.innerHTML = message;
+  }
+
+  function testFetchStatic() {
+    fetch('./assets/data.json')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setResult('result-fetch-static', true, 'SUCCESS: ' + JSON.stringify(data, null, 2));
+      })
+      .catch(function(err) {
+        setResult('result-fetch-static', false, 'ERROR: ' + err.message);
+      });
+  }
+
+  function testFetchDynamic() {
+    var file = 'config';
+    fetch('./assets/' + file + '.json')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setResult('result-fetch-dynamic', true, 'SUCCESS: ' + JSON.stringify(data, null, 2));
+      })
+      .catch(function(err) {
+        setResult('result-fetch-dynamic', false, 'ERROR: ' + err.message);
+      });
+  }
+
+  function testFetchTemplate() {
+    var name = 'data';
+    fetch('./assets/' + name + '.json')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setResult('result-fetch-template', true, 'SUCCESS: ' + JSON.stringify(data, null, 2));
+      })
+      .catch(function(err) {
+        setResult('result-fetch-template', false, 'ERROR: ' + err.message);
+      });
+  }
+
+  function testDynamicImport() {
+    import('./assets/module.js')
+      .then(function(module) {
+        setResult('result-dynamic-import', true,
+          'SUCCESS: Module loaded!\n' +
+          'MODULE_NAME: ' + module.MODULE_NAME + '\n' +
+          'MODULE_VERSION: ' + module.MODULE_VERSION + '\n' +
+          'calculateSum(2, 3): ' + module.calculateSum(2, 3)
+        );
+      })
+      .catch(function(err) {
+        setResult('result-dynamic-import', false, 'ERROR: ' + err.message);
+      });
+  }
+
+  function testWorker() {
+    try {
+      var worker = new Worker('./assets/worker.js');
+      worker.onmessage = function(e) {
+        setResult('result-worker', true, 'SUCCESS: Worker message received:\n' + JSON.stringify(e.data, null, 2));
+        worker.terminate();
+      };
+      worker.onerror = function(err) {
+        setResult('result-worker', false, 'ERROR: ' + err.message);
+      };
+    } catch (err) {
+      setResult('result-worker', false, 'ERROR: ' + err.message);
+    }
+  }
+
+  function testImageConstructor() {
+    var img = new Image();
+    img.onload = function() {
+      var container = document.getElementById('result-image-constructor');
+      container.className = 'result result-success js-image-container';
+      container.innerHTML = '';
+      container.appendChild(img);
+      var span = document.createElement('span');
+      span.textContent = 'SUCCESS: Image loaded (' + img.width + 'x' + img.height + ')';
+      container.appendChild(span);
+    };
+    img.onerror = function() {
+      setResult('result-image-constructor', false, 'ERROR: Failed to load image');
+    };
+    img.src = './assets/image.svg';
+    img.style.width = '100px';
+    img.style.height = '100px';
+  }
+
+  function testElementSrc() {
+    var img = document.getElementById('test-img-element');
+    img.onload = function() {
+      img.style.display = 'block';
+      var container = document.getElementById('result-element-src');
+      container.className = 'result result-success js-image-container';
+      container.querySelector('span').textContent = 'SUCCESS: Image loaded (' + img.naturalWidth + 'x' + img.naturalHeight + ')';
+    };
+    img.onerror = function() {
+      setResult('result-element-src', false, 'ERROR: Failed to load image');
+    };
+    img.src = './assets/image.svg';
+  }
+
+  function testNewURL() {
+    try {
+      var url = new URL('./assets/data.json', window.location.href);
+      fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          setResult('result-new-url', true,
+            'SUCCESS: URL resolved to:\n' + url.href + '\n\nData: ' + JSON.stringify(data, null, 2)
+          );
+        })
+        .catch(function(err) {
+          setResult('result-new-url', false, 'URL: ' + url.href + '\nERROR: ' + err.message);
+        });
+    } catch (err) {
+      setResult('result-new-url', false, 'ERROR: ' + err.message);
+    }
+  }
+
+  function testXHR() {
+    var xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        setResult('result-xhr', true, 'SUCCESS: ' + xhr.responseText);
+      } else {
+        setResult('result-xhr', false, 'ERROR: Status ' + xhr.status);
+      }
+    };
+    xhr.onerror = function() {
+      setResult('result-xhr', false, 'ERROR: XHR request failed');
+    };
+    xhr.open('GET', './assets/data.json');
+    xhr.send();
+  }
+
+  function testVariablePath() {
+    var path = './assets/data.json';
+    fetch(path)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setResult('result-variable-path', true, 'SUCCESS: ' + JSON.stringify(data, null, 2));
+      })
+      .catch(function(err) {
+        setResult('result-variable-path', false, 'ERROR: ' + err.message);
+      });
+  }
+
+  function testConfigPath() {
+    var config = { dataPath: './assets/data.json' };
+    fetch(config.dataPath)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setResult('result-config-path', true, 'SUCCESS: ' + JSON.stringify(data, null, 2));
+      })
+      .catch(function(err) {
+        setResult('result-config-path', false, 'ERROR: ' + err.message);
+      });
+  }
+</script>

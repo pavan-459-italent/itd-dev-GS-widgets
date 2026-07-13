@@ -1,0 +1,12 @@
+{
+  "sourceEntry": "content.html",
+  "containers": ["Full width"],
+  "widgetsLibrary": true,
+  "settings": {
+    "configurable": true,
+    "editable": true,
+    "removable": true,
+    "shared": false,
+    "movable": true
+  }
+}

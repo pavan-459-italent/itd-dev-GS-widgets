@@ -1,0 +1,4 @@
+---
+description: When asked to commit changes do it with nice messages and succinct descriptions. At the end of every description, in a separate line add the the JIRA ticket number based on the branch name. For example: GE-234040.
+alwaysApply: true
+---

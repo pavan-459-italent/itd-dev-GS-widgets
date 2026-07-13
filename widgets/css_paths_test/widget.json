@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "title": "CSS Paths Test",
+  "description": "Tests CSS path mechanisms including url(), @import, @font-face, and image-set()",
+  "category": "Path Tests"
+}
