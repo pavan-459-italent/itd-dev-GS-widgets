@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "title": "Greeting Card",
+  "description": "A configurable greeting card",
+  "category": "custom",
+  "containers": ["Full width", "Sidebar"],
+  "source": {
+    "path": ".",
+    "entry": "index.html"
+  },
+  "configuration": {
+    "properties": [
+      {
+        "name": "title",
+        "type": "text",
+        "label": "Title",
+        "rules": { "required": true }
+      },
+      {
+        "name": "message",
+        "type": "text",
+        "label": "Message"
+      },
+      {
+        "name": "color",
+        "type": "color",
+        "label": "Background Color"
+      }
+    ]
+  },
+  "defaultConfig": {
+    "title": "Welcome!",
+    "message": "Explore topics, ask questions, and connect with others.",
+    "color": "#eef5fc"
+  }
+}

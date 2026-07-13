@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "title": "Announcement Banner",
+  "description": "A welcome banner for community pages",
+  "category": "custom",
+  "settings": {
+    "configurable": false
+  },
+  "source": {
+    "path": ".",
+    "entry": "index.html"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "widgets": [
+    {
+      "category": "custom",
+      "containers": [
+        "Full width"
+      ],
+      "description": "A welcome banner for community pages",
+      "settings": {
+        "configurable": false,
+        "editable": true,
+        "movable": false,
+        "removable": true,
+        "shared": false
+      },
+      "title": "Announcement Banner",
+      "version": "1.0.0",
+      "widgetsLibrary": true,
+      "type": "announcement",
+      "source": {
+        "path": "widgets/announcement",
+        "entry": "index.html"
+      }
+    },
+    {
+      "category": "custom",
+      "configuration": {
+        "properties": [
+          {
+            "name": "title",
+            "type": "text",
+            "label": "Title",
+            "rules": {
+              "required": true
+            }
+          },
+          {
+            "name": "message",
+            "type": "text",
+            "label": "Message"
+          },
+          {
+            "name": "color",
+            "type": "color",
+            "label": "Background Color"
+          }
+        ]
+      },
+      "containers": [
+        "Full width",
+        "Sidebar"
+      ],
+      "defaultConfig": {
+        "title": "Welcome!",
+        "message": "Explore topics, ask questions, and connect with others.",
+        "color": "#eef5fc"
+      },
+      "description": "A configurable greeting card",
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": false
+      },
+      "title": "Greeting Card",
+      "version": "1.0.0",
+      "widgetsLibrary": true,
+      "type": "greeting",
+      "source": {
+        "path": "widgets/greeting",
+        "entry": "index.html"
+      }
+    }
+  ]
+}
