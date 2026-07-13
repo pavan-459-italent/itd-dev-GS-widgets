@@ -1,0 +1,43 @@
+<div data-dev-loader="styled_widget"></div>
+<script>
+  (function () {
+    var shadow = (function () {
+      var elements = document.querySelectorAll('*');
+      for (var i = 0; i < elements.length; i++) {
+        var sr = elements[i].shadowRoot;
+        if (sr && sr.querySelector('[data-dev-loader="styled_widget"]')) return sr;
+      }
+    })();
+
+    if (!shadow) return;
+    if (shadow.querySelector('#styled_widget-root')) return;
+
+    var base = 'http://localhost:5174';
+
+    fetch(base + '/')
+      .then(function (r) { return r.text(); })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+
+        doc.body.childNodes.forEach(function (node) {
+          if (node.nodeName !== 'SCRIPT') {
+            shadow.appendChild(document.importNode(node, true));
+          }
+        });
+
+        doc.querySelectorAll('script').forEach(function (old) {
+          var el = document.createElement('script');
+          old.getAttributeNames().forEach(function (name) {
+            el.setAttribute(
+              name,
+              name === 'src'
+                ? new URL(old.getAttribute('src'), base).href
+                : old.getAttribute(name)
+            );
+          });
+          if (!old.hasAttribute('src')) el.textContent = old.textContent;
+          shadow.appendChild(el);
+        });
+      });
+  })();
+</script>

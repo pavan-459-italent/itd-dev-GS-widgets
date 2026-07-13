@@ -1,0 +1,86 @@
+{
+  "widgets": [
+    {
+      "type": "react_widget",
+      "title": "React Widget",
+      "version": "1.0.0",
+      "description": "A React widget using the ESM module pattern with Widget SDK",
+      "category": "Demo",
+      "source": {
+        "path": "dist",
+        "entry": "index.html"
+      },
+      "containers": [
+        "Full width"
+      ],
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": false
+      },
+      "configuration": {
+        "properties": [
+          {
+            "name": "title",
+            "type": "text",
+            "label": "Title",
+            "defaultValue": "React Widget",
+            "rules": {
+              "required": true
+            }
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "label": "Description",
+            "defaultValue": "A widget built with React and the Widget SDK."
+          }
+        ]
+      },
+      "defaultConfig": {
+        "title": "React Widget",
+        "description": "A widget built with React and the Widget SDK."
+      },
+      "widgetsLibrary": true,
+      "imageSrc": "widgets/react_widget/thumbnail.png"
+    },
+    {
+      "type": "styled_widget",
+      "title": "Styled Widget",
+      "version": "1.0.0",
+      "description": "A React widget using styled-components",
+      "category": "Demo",
+      "source": {
+        "path": "dist",
+        "entry": "index.html"
+      },
+      "containers": [
+        "Full width"
+      ],
+      "settings": {
+        "configurable": true,
+        "editable": true,
+        "removable": true,
+        "shared": false,
+        "movable": false
+      },
+      "configuration": {
+        "properties": [
+          {
+            "name": "label",
+            "type": "text",
+            "label": "Label",
+            "defaultValue": "Styled Widget"
+          }
+        ]
+      },
+      "defaultConfig": {
+        "label": "Styled Widget"
+      },
+      "widgetsLibrary": true,
+      "imageSrc": "widgets/styled_widget/thumbnail.png"
+    }
+  ]
+}
