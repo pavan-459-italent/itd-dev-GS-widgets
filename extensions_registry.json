@@ -169,6 +169,39 @@
         "description": "A widget built with Vue and the Widget SDK."
       },
       "type": "countries-vue"
+    },
+    {
+      "title": "External Api Html",
+      "description": "Displays the first 50 posts from an external API with 5 posts per page.",
+      "category": "Demo",
+      "source": {
+        "path": "widgets/external-api-html/dist",
+        "entry": "content.html"
+      },
+      "configuration": {
+        "properties": [
+          {
+            "name": "title",
+            "type": "text",
+            "label": "Title",
+            "defaultValue": "External Api",
+            "rules": {
+              "required": true
+            }
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "label": "Description",
+            "defaultValue": "Displays the first 50 posts from an external API with 5 posts per page."
+          }
+        ]
+      },
+      "defaultConfig": {
+        "title": "External Api",
+        "description": "Displays the first 50 posts from an external API with 5 posts per page."
+      },
+      "type": "external-api-html"
     }
   ],
   "stylesheets": [

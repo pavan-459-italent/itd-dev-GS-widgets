@@ -1,0 +1,32 @@
+{
+  "title": "External Api Html",
+  "description": "Displays the first 50 posts from an external API with 5 posts per page.",
+  "category": "Demo",
+  "source": {
+    "path": "dist",
+    "entry": "content.html"
+  },
+  "configuration": {
+    "properties": [
+      {
+        "name": "title",
+        "type": "text",
+        "label": "Title",
+        "defaultValue": "External Api",
+        "rules": {
+          "required": true
+        }
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "label": "Description",
+        "defaultValue": "Displays the first 50 posts from an external API with 5 posts per page."
+      }
+    ]
+  },
+  "defaultConfig": {
+    "title": "External Api",
+    "description": "Displays the first 50 posts from an external API with 5 posts per page."
+  }
+}

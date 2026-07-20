@@ -1,0 +1,11 @@
+{
+  "connectors": [
+    {
+      "name": "Json placeholder -get posts",
+      "url": "https://jsonplaceholder.typicode.com/posts",
+      "method": "GET",
+      "permalink": "json-placeholder-get-posts",
+      "response_content_type": "application/json"
+    }
+  ]
+}
