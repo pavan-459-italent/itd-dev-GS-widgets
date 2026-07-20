@@ -20,13 +20,6 @@
       ],
       "permalink": "rest-countries",
       "response_content_type": "application/json"
-    },
-    {
-      "name": "Json placeholder -get posts",
-      "url": "https://jsonplaceholder.typicode.com/posts",
-      "method": "GET",
-      "permalink": "json-placeholder-get-posts",
-      "response_content_type": "application/json"
     }
   ],
   "composite_connectors": [
