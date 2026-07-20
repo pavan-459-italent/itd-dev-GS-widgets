@@ -2,6 +2,9 @@
   "title": "External Api Html",
   "description": "Displays the first 50 posts from an external API with 5 posts per page.",
   "category": "Demo",
+  "containers": [
+    "Sidebar"
+  ],
   "source": {
     "path": "dist",
     "entry": "content.html"
