@@ -11,8 +11,16 @@
   margin: 24px 0 24px 24px;
 }
 
-.widget-framework-header {
+.widget-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin: 0 0 10px 0;
+}
+
+.widget-framework-header {
+  margin: 0;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -21,6 +29,42 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: #1e1e2e;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #4FC1E8;
+  color: #ffffff;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.refresh-btn.is-spinning {
+  animation: refresh-spin 0.6s linear infinite;
+}
+
+@keyframes refresh-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .post-list {
@@ -102,7 +146,10 @@
 }
 </style>
 <section class="html-widget-section">
-  <p class="widget-framework-header">JSON placeholder api results</p>
+  <div class="widget-header-row">
+    <p class="widget-framework-header">JSON placeholder api results</p>
+    <button type="button" class="refresh-btn" id="refresh-btn" title="Refresh" aria-label="Refresh posts">&#8635;</button>
+  </div>
   <div id="post-content">
     <p class="post-status">Loading posts&hellip;</p>
   </div>
@@ -112,6 +159,8 @@
   const PAGE_SIZE = 5;
 
   const contentEl = document.getElementById("post-content");
+  const refreshBtn = document.getElementById("refresh-btn");
+  const sdk = new window.WidgetServiceSDK();
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({
@@ -155,9 +204,12 @@
     });
   }
 
-  (async () => {
+  async function loadPosts() {
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add("is-spinning");
+    contentEl.innerHTML = `<p class="post-status">Loading posts&hellip;</p>`;
+
     try {
-      const sdk = new window.WidgetServiceSDK();
       const result = await sdk.connectors.execute({
         permalink: "json-placeholder-get-posts",
         method: "GET",
@@ -175,6 +227,13 @@
     } catch (err) {
       contentEl.innerHTML = `<p class="post-status">Failed to load posts.</p>`;
       console.error(err);
+    } finally {
+      refreshBtn.disabled = false;
+      refreshBtn.classList.remove("is-spinning");
     }
-  })();
+  }
+
+  refreshBtn.addEventListener("click", loadPosts);
+
+  loadPosts();
 </script>
