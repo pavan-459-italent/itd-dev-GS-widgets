@@ -1,6 +1,6 @@
 {
-  "title": "External Api Html",
-  "description": "Displays ServiceNow incidents from an external API with 5 incidents per page.",
+  "title": "ServiceNow Html",
+  "description": "Displays all ServiceNow incidents, 5 per page.",
   "category": "Demo",
   "containers": [
     "Sidebar"
@@ -15,7 +15,7 @@
         "name": "title",
         "type": "text",
         "label": "Title",
-        "defaultValue": "External Api",
+        "defaultValue": "ServiceNow",
         "rules": {
           "required": true
         }
@@ -24,12 +24,12 @@
         "name": "description",
         "type": "text",
         "label": "Description",
-        "defaultValue": "Displays ServiceNow incidents from an external API with 5 incidents per page."
+        "defaultValue": "Displays all ServiceNow incidents, 5 per page."
       }
     ]
   },
   "defaultConfig": {
-    "title": "External Api",
-    "description": "Displays ServiceNow incidents from an external API with 5 incidents per page."
+    "title": "ServiceNow",
+    "description": "Displays all ServiceNow incidents, 5 per page."
   }
 }
