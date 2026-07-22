@@ -1,4 +1,4 @@
-<!-- ServiceNow Widget v3 -->
+<!-- ServiceNow Widget v4 -->
 <style>
 .html-widget-section {
   padding: 16px;
@@ -439,50 +439,83 @@
       });
     }
 
+    function createEl(tag, attrs = {}, children = []) {
+      const el = document.createElement(tag);
+      Object.entries(attrs).forEach(([key, value]) => {
+        if (key === "className") {
+          el.className = value;
+        } else if (key === "textContent") {
+          el.textContent = value;
+        } else if (key === "htmlFor") {
+          el.htmlFor = value;
+        } else if (value === true || value === false) {
+          if (value) el.setAttribute(key, "");
+        } else {
+          el.setAttribute(key, value);
+        }
+      });
+      children.forEach((child) => el.appendChild(child));
+      return el;
+    }
+
     function renderCreateView() {
       state.view = "create";
-      contentEl.innerHTML = `
-        <h3 class="view-title">Create Incident</h3>
-        <form id="create-form">
-          <div class="form-group">
-            <label class="form-label" for="create-title">Title <span aria-label="required">*</span></label>
-            <input class="form-input" type="text" id="create-title" name="title" required placeholder="Brief summary of the issue" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="create-description">Description</label>
-            <textarea class="form-textarea" id="create-description" name="description" placeholder="Detailed description"></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="create-priority">Priority</label>
-            <select class="form-select" id="create-priority" name="priority">
-              <option value="">Default</option>
-              <option value="1">Critical</option>
-              <option value="2">High</option>
-              <option value="3">Moderate</option>
-              <option value="4">Low</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="create-category">Category</label>
-            <input class="form-input" type="text" id="create-category" name="category" placeholder="e.g. Network" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="create-subcategory">Subcategory</label>
-            <input class="form-input" type="text" id="create-subcategory" name="subcategory" placeholder="e.g. Email" />
-          </div>
-          <div class="actions-row">
-            <button type="submit" class="btn-primary" id="submit-create">Create</button>
-            <button type="button" class="btn-secondary" id="cancel-create">Cancel</button>
-          </div>
-        </form>
-      `;
+      contentEl.innerHTML = "";
 
-      sdk.root.querySelector("#create-form").addEventListener("submit", (e) => {
+      const title = createEl("h3", { className: "view-title", textContent: "Create Incident" });
+
+      const titleLabel = createEl("label", { className: "form-label", htmlFor: "create-title", textContent: "Title " });
+      titleLabel.appendChild(createEl("span", { "aria-label": "required", textContent: "*" }));
+      const titleInput = createEl("input", { className: "form-input", type: "text", id: "create-title", name: "title", required: true, placeholder: "Brief summary of the issue" });
+      const titleGroup = createEl("div", { className: "form-group" }, [titleLabel, titleInput]);
+
+      const descLabel = createEl("label", { className: "form-label", htmlFor: "create-description", textContent: "Description" });
+      const descTextarea = createEl("textarea", { className: "form-textarea", id: "create-description", name: "description", placeholder: "Detailed description" });
+      const descGroup = createEl("div", { className: "form-group" }, [descLabel, descTextarea]);
+
+      const priorityLabel = createEl("label", { className: "form-label", htmlFor: "create-priority", textContent: "Priority" });
+      const prioritySelect = createEl("select", { className: "form-select", id: "create-priority", name: "priority" });
+      [
+        { value: "", text: "Default" },
+        { value: "1", text: "Critical" },
+        { value: "2", text: "High" },
+        { value: "3", text: "Moderate" },
+        { value: "4", text: "Low" },
+      ].forEach((opt) => {
+        prioritySelect.appendChild(createEl("option", { value: opt.value, textContent: opt.text }));
+      });
+      const priorityGroup = createEl("div", { className: "form-group" }, [priorityLabel, prioritySelect]);
+
+      const categoryLabel = createEl("label", { className: "form-label", htmlFor: "create-category", textContent: "Category" });
+      const categoryInput = createEl("input", { className: "form-input", type: "text", id: "create-category", name: "category", placeholder: "e.g. Network" });
+      const categoryGroup = createEl("div", { className: "form-group" }, [categoryLabel, categoryInput]);
+
+      const subcategoryLabel = createEl("label", { className: "form-label", htmlFor: "create-subcategory", textContent: "Subcategory" });
+      const subcategoryInput = createEl("input", { className: "form-input", type: "text", id: "create-subcategory", name: "subcategory", placeholder: "e.g. Email" });
+      const subcategoryGroup = createEl("div", { className: "form-group" }, [subcategoryLabel, subcategoryInput]);
+
+      const submitBtn = createEl("button", { type: "submit", className: "btn-primary", id: "submit-create", textContent: "Create" });
+      const cancelBtn = createEl("button", { type: "button", className: "btn-secondary", id: "cancel-create", textContent: "Cancel" });
+      const actionsRow = createEl("div", { className: "actions-row" }, [submitBtn, cancelBtn]);
+
+      const form = createEl("form", { id: "create-form" }, [
+        titleGroup,
+        descGroup,
+        priorityGroup,
+        categoryGroup,
+        subcategoryGroup,
+        actionsRow,
+      ]);
+
+      contentEl.appendChild(title);
+      contentEl.appendChild(form);
+
+      form.addEventListener("submit", (e) => {
         e.preventDefault();
         handleCreate();
       });
 
-      sdk.root.querySelector("#cancel-create").addEventListener("click", () => {
+      cancelBtn.addEventListener("click", () => {
         loadIncidents();
       });
     }
@@ -584,22 +617,25 @@
 
     function renderEscalateForm() {
       const container = sdk.root.querySelector("#escalate-form-container");
-      container.innerHTML = `
-        <div class="form-group">
-          <label class="form-label" for="escalate-reason">Reason <span aria-label="required">*</span></label>
-          <textarea class="form-textarea" id="escalate-reason" placeholder="Explain why this incident needs escalation"></textarea>
-        </div>
-        <div class="actions-row">
-          <button type="button" class="btn-primary" id="submit-escalate">Submit Escalation</button>
-          <button type="button" class="btn-secondary" id="cancel-escalate">Cancel</button>
-        </div>
-      `;
+      container.innerHTML = "";
 
-      sdk.root.querySelector("#submit-escalate").addEventListener("click", () => {
+      const reasonLabel = createEl("label", { className: "form-label", htmlFor: "escalate-reason", textContent: "Reason " });
+      reasonLabel.appendChild(createEl("span", { "aria-label": "required", textContent: "*" }));
+      const reasonTextarea = createEl("textarea", { className: "form-textarea", id: "escalate-reason", placeholder: "Explain why this incident needs escalation" });
+      const reasonGroup = createEl("div", { className: "form-group" }, [reasonLabel, reasonTextarea]);
+
+      const submitBtn = createEl("button", { type: "button", className: "btn-primary", id: "submit-escalate", textContent: "Submit Escalation" });
+      const cancelBtn = createEl("button", { type: "button", className: "btn-secondary", id: "cancel-escalate", textContent: "Cancel" });
+      const actionsRow = createEl("div", { className: "actions-row" }, [submitBtn, cancelBtn]);
+
+      container.appendChild(reasonGroup);
+      container.appendChild(actionsRow);
+
+      submitBtn.addEventListener("click", () => {
         handleEscalate();
       });
 
-      sdk.root.querySelector("#cancel-escalate").addEventListener("click", () => {
+      cancelBtn.addEventListener("click", () => {
         container.innerHTML = "";
       });
     }
