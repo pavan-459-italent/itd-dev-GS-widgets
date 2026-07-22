@@ -73,9 +73,7 @@
       ],
       "path_parameters": [
         {
-          "key": "sysId",
-          "value": "",
-          "overridable": true
+          "key": "sysId"
         }
       ],
       "response_content_type": "application/json"
