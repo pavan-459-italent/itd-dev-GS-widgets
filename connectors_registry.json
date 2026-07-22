@@ -52,7 +52,8 @@
           "overridable": false
         }
       ],
-      "response_content_type": "application/json"
+      "response_content_type": "application/json",
+      "request_body": null
     },
     {
       "name": "ServiceNow Case Escalate",
@@ -71,7 +72,8 @@
           "overridable": false
         }
       ],
-      "response_content_type": "application/json"
+      "response_content_type": "application/json",
+      "request_body": null
     }
   ],
   "composite_connectors": [

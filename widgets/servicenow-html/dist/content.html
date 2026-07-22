@@ -1,4 +1,4 @@
-<!-- ServiceNow Widget v4 -->
+<!-- ServiceNow Widget v6 -->
 <style>
 .html-widget-section {
   padding: 16px;
@@ -550,7 +550,7 @@
         const result = await connectorsSdk.connectors.execute({
           permalink: "servicenow-case-create",
           method: "POST",
-          request_body: payload,
+          payload: payload,
         });
 
         showMessage(`Incident ${escapeHtml(result?.caseNumber || "created")} created successfully.`, "success");
@@ -566,51 +566,58 @@
       state.view = "detail";
       state.selectedIncident = incident;
 
-      contentEl.innerHTML = `
-        <h3 class="view-title">${escapeHtml(incident.caseNumber)}</h3>
-        <div class="detail-view">
-          <div class="detail-row">
-            <div class="detail-label">Title</div>
-            <div class="detail-value">${escapeHtml(incident.title)}</div>
-          </div>
-          ${incident.description ? `
-          <div class="detail-row">
-            <div class="detail-label">Description</div>
-            <div class="detail-value detail-description">${escapeHtml(incident.description)}</div>
-          </div>` : ""}
-          <div class="detail-row">
-            <div class="detail-label">Status</div>
-            <div class="detail-value">
-              <span class="post-badge post-badge--status-${slugify(incident.status)}">${escapeHtml(incident.status)}</span>
-            </div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Priority</div>
-            <div class="detail-value">
-              <span class="post-badge post-badge--priority-${slugify(incident.priority)}">${escapeHtml(incident.priority)}</span>
-            </div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Created</div>
-            <div class="detail-value">${escapeHtml(formatDate(incident.createdDate))}</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Created By</div>
-            <div class="detail-value">${escapeHtml(incident.createdBy || "Unknown")}</div>
-          </div>
-          <div class="actions-row">
-            <button type="button" class="btn-primary" id="escalate-btn">Escalate</button>
-            <button type="button" class="btn-secondary" id="back-btn">Back</button>
-          </div>
-          <div id="escalate-form-container" style="margin-top: 16px;"></div>
-        </div>
-      `;
+      contentEl.innerHTML = "";
 
-      sdk.root.querySelector("#back-btn").addEventListener("click", () => {
+      const title = createEl("h3", { className: "view-title", textContent: incident.caseNumber });
+      const detailView = createEl("div", { className: "detail-view" });
+
+      const addRow = (labelText, valueContent) => {
+        const row = createEl("div", { className: "detail-row" });
+        const label = createEl("div", { className: "detail-label", textContent: labelText });
+        const value = createEl("div", { className: "detail-value" });
+        if (typeof valueContent === "string") {
+          value.textContent = valueContent;
+        } else {
+          value.appendChild(valueContent);
+        }
+        row.appendChild(label);
+        row.appendChild(value);
+        detailView.appendChild(row);
+      };
+
+      addRow("Title", incident.title);
+
+      if (incident.description) {
+        const descValue = createEl("div", { className: "detail-value detail-description", textContent: incident.description });
+        addRow("Description", descValue);
+      }
+
+      const statusBadge = createEl("span", { className: `post-badge post-badge--status-${slugify(incident.status)}`, textContent: incident.status });
+      addRow("Status", statusBadge);
+
+      const priorityBadge = createEl("span", { className: `post-badge post-badge--priority-${slugify(incident.priority)}`, textContent: incident.priority });
+      addRow("Priority", priorityBadge);
+
+      addRow("Created", formatDate(incident.createdDate));
+      addRow("Created By", incident.createdBy || "Unknown");
+
+      const escalateBtn = createEl("button", { type: "button", className: "btn-primary", id: "escalate-btn", textContent: "Escalate" });
+      const backBtn = createEl("button", { type: "button", className: "btn-secondary", id: "back-btn", textContent: "Back" });
+      const actionsRow = createEl("div", { className: "actions-row" }, [escalateBtn, backBtn]);
+
+      const escalateContainer = createEl("div", { id: "escalate-form-container", style: "margin-top: 16px;" });
+
+      detailView.appendChild(actionsRow);
+      detailView.appendChild(escalateContainer);
+
+      contentEl.appendChild(title);
+      contentEl.appendChild(detailView);
+
+      backBtn.addEventListener("click", () => {
         renderListView(state.incidents, state.currentPage);
       });
 
-      sdk.root.querySelector("#escalate-btn").addEventListener("click", () => {
+      escalateBtn.addEventListener("click", () => {
         renderEscalateForm();
       });
     }
@@ -657,7 +664,7 @@
         await connectorsSdk.connectors.execute({
           permalink: "servicenow-case-escalate",
           method: "POST",
-          request_body: {
+          payload: {
             sysId: state.selectedIncident.sysId,
             reason: reasonInput.value.trim(),
           },
