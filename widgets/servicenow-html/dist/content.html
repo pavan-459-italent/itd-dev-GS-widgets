@@ -620,8 +620,10 @@
         await connectorsSdk.connectors.execute({
           permalink: "servicenow-case-escalate",
           method: "POST",
-          path_parameters: { sysId: state.selectedIncident.sysId },
-          request_body: { reason: reasonInput.value.trim() },
+          request_body: {
+            sysId: state.selectedIncident.sysId,
+            reason: reasonInput.value.trim(),
+          },
         });
 
         showMessage("Incident escalated successfully.", "success");

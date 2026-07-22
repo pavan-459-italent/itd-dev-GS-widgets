@@ -57,7 +57,7 @@
     {
       "name": "ServiceNow Case Escalate",
       "permalink": "servicenow-case-escalate",
-      "url": "https://compactly-written-jolt.ngrok-free.dev/api/servicenow/cases/{sysId}/escalate",
+      "url": "https://compactly-written-jolt.ngrok-free.dev/api/servicenow/cases/escalate",
       "method": "POST",
       "headers": [
         {
@@ -69,11 +69,6 @@
           "key": "Content-Type",
           "value": "application/json",
           "overridable": false
-        }
-      ],
-      "path_parameters": [
-        {
-          "key": "sysId"
         }
       ],
       "response_content_type": "application/json"
