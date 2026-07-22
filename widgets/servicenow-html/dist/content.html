@@ -177,13 +177,157 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary,
+.btn-secondary {
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #0E6FFF;
+  color: #ffffff;
+  border-color: #0E6FFF;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #094db5;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #1e1e2e;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #4FC1E8;
+  color: #ffffff;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #444458;
+  margin-bottom: 4px;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.actions-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.detail-view {
+  font-size: 0.8125rem;
+}
+
+.detail-row {
+  margin-bottom: 10px;
+}
+
+.detail-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #444458;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.detail-value {
+  color: #1e1e2e;
+  line-height: 1.4;
+}
+
+.detail-description {
+  background: #ffffff;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  white-space: pre-wrap;
+}
+
+.incident-link {
+  cursor: pointer;
+}
+
+.incident-link:hover .post-title {
+  color: #0E6FFF;
+}
+
+.message-success,
+.message-error {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  margin-bottom: 12px;
+}
+
+.message-success {
+  background: #e6f9ed;
+  color: #1f7a3d;
+}
+
+.message-error {
+  background: #fdecec;
+  color: #9e2b2b;
+}
+
+.view-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: #1e1e2e;
+}
 </style>
 <section class="html-widget-section">
   <div class="widget-header-row">
     <p class="widget-framework-header">ServiceNow incidents</p>
-    <button type="button" class="refresh-btn" id="refresh-btn" title="Refresh" aria-label="Refresh incidents">&#8635;</button>
+    <div class="header-actions">
+      <button type="button" class="refresh-btn" id="refresh-btn" title="Refresh" aria-label="Refresh incidents">&#8635;</button>
+      <button type="button" class="btn-primary" id="create-btn">Create Incident</button>
+    </div>
   </div>
-  <div id="post-content">
+  <div id="message-area"></div>
+  <div id="view-container">
     <p class="post-status">Loading incidents&hellip;</p>
   </div>
 </section>
@@ -216,10 +360,41 @@
 
     const connectorsSdk = typeof window.WidgetServiceSDK === "function" ? new window.WidgetServiceSDK() : null;
 
-    const contentEl = sdk.root.querySelector("#post-content");
+    const contentEl = sdk.root.querySelector("#view-container");
+    const messageEl = sdk.root.querySelector("#message-area");
     const refreshBtn = sdk.root.querySelector("#refresh-btn");
+    const createBtn = sdk.root.querySelector("#create-btn");
 
-    function renderPage(incidents, page) {
+    const state = {
+      view: "list",
+      incidents: [],
+      currentPage: 1,
+      selectedIncident: null,
+    };
+
+    function showMessage(text, type) {
+      messageEl.innerHTML = `<div class="message-${type}">${escapeHtml(text)}</div>`;
+      if (type === "success") {
+        setTimeout(() => {
+          messageEl.innerHTML = "";
+        }, 5000);
+      }
+    }
+
+    function clearMessage() {
+      messageEl.innerHTML = "";
+    }
+
+    function renderListView(incidents, page) {
+      state.view = "list";
+      state.incidents = incidents;
+      state.currentPage = page;
+
+      if (!incidents.length) {
+        contentEl.innerHTML = `<p class="post-status">No incidents found.</p>`;
+        return;
+      }
+
       const totalPages = Math.max(1, Math.ceil(incidents.length / PAGE_SIZE));
       const start = (page - 1) * PAGE_SIZE;
       const pageIncidents = incidents.slice(start, start + PAGE_SIZE);
@@ -227,7 +402,7 @@
       const items = pageIncidents
         .map(
           (incident) => `
-            <li class="post-item">
+            <li class="post-item incident-link" data-sysid="${escapeHtml(incident.sysId)}">
               <p class="post-title">${escapeHtml(incident.caseNumber)} &mdash; ${escapeHtml(incident.title)}</p>
               <p class="post-body">
                 <span class="post-badge post-badge--status-${slugify(incident.status)}">${escapeHtml(incident.status)}</span>
@@ -247,12 +422,215 @@
         </div>
       `;
 
-      sdk.root.querySelector("#prev-btn").addEventListener("click", () => {
-        if (page > 1) renderPage(incidents, page - 1);
+      sdk.root.querySelectorAll(".incident-link").forEach((el) => {
+        el.addEventListener("click", () => {
+          const sysId = el.getAttribute("data-sysid");
+          const incident = incidents.find((i) => i.sysId === sysId);
+          if (incident) renderDetailView(incident);
+        });
       });
-      sdk.root.querySelector("#next-btn").addEventListener("click", () => {
-        if (page < totalPages) renderPage(incidents, page + 1);
+
+      sdk.root.querySelector("#prev-btn")?.addEventListener("click", () => {
+        if (page > 1) renderListView(incidents, page - 1);
       });
+      sdk.root.querySelector("#next-btn")?.addEventListener("click", () => {
+        if (page < totalPages) renderListView(incidents, page + 1);
+      });
+    }
+
+    function renderCreateView() {
+      state.view = "create";
+      contentEl.innerHTML = `
+        <h3 class="view-title">Create Incident</h3>
+        <form id="create-form">
+          <div class="form-group">
+            <label class="form-label" for="create-title">Title <span aria-label="required">*</span></label>
+            <input class="form-input" type="text" id="create-title" name="title" required placeholder="Brief summary of the issue" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="create-description">Description</label>
+            <textarea class="form-textarea" id="create-description" name="description" placeholder="Detailed description"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="create-priority">Priority</label>
+            <select class="form-select" id="create-priority" name="priority">
+              <option value="">Default</option>
+              <option value="1">Critical</option>
+              <option value="2">High</option>
+              <option value="3">Moderate</option>
+              <option value="4">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="create-category">Category</label>
+            <input class="form-input" type="text" id="create-category" name="category" placeholder="e.g. Network" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="create-subcategory">Subcategory</label>
+            <input class="form-input" type="text" id="create-subcategory" name="subcategory" placeholder="e.g. Email" />
+          </div>
+          <div class="actions-row">
+            <button type="submit" class="btn-primary" id="submit-create">Create</button>
+            <button type="button" class="btn-secondary" id="cancel-create">Cancel</button>
+          </div>
+        </form>
+      `;
+
+      sdk.root.querySelector("#create-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        handleCreate();
+      });
+
+      sdk.root.querySelector("#cancel-create").addEventListener("click", () => {
+        loadIncidents();
+      });
+    }
+
+    async function handleCreate() {
+      const titleInput = sdk.root.querySelector("#create-title");
+      const descriptionInput = sdk.root.querySelector("#create-description");
+      const priorityInput = sdk.root.querySelector("#create-priority");
+      const categoryInput = sdk.root.querySelector("#create-category");
+      const subcategoryInput = sdk.root.querySelector("#create-subcategory");
+      const submitBtn = sdk.root.querySelector("#submit-create");
+
+      if (!titleInput.value.trim()) {
+        showMessage("Title is required.", "error");
+        return;
+      }
+
+      const payload = {
+        title: titleInput.value.trim(),
+        description: descriptionInput.value.trim(),
+      };
+
+      if (priorityInput.value) payload.priority = priorityInput.value;
+      if (categoryInput.value.trim()) payload.category = categoryInput.value.trim();
+      if (subcategoryInput.value.trim()) payload.subcategory = subcategoryInput.value.trim();
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating...";
+      clearMessage();
+
+      try {
+        const result = await connectorsSdk.connectors.execute({
+          permalink: "servicenow-case-create",
+          method: "POST",
+          request_body: payload,
+        });
+
+        showMessage(`Incident ${escapeHtml(result?.caseNumber || "created")} created successfully.`, "success");
+        await loadIncidents();
+      } catch (err) {
+        showMessage(err?.message || "Failed to create incident.", "error");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Create";
+      }
+    }
+
+    function renderDetailView(incident) {
+      state.view = "detail";
+      state.selectedIncident = incident;
+
+      contentEl.innerHTML = `
+        <h3 class="view-title">${escapeHtml(incident.caseNumber)}</h3>
+        <div class="detail-view">
+          <div class="detail-row">
+            <div class="detail-label">Title</div>
+            <div class="detail-value">${escapeHtml(incident.title)}</div>
+          </div>
+          ${incident.description ? `
+          <div class="detail-row">
+            <div class="detail-label">Description</div>
+            <div class="detail-value detail-description">${escapeHtml(incident.description)}</div>
+          </div>` : ""}
+          <div class="detail-row">
+            <div class="detail-label">Status</div>
+            <div class="detail-value">
+              <span class="post-badge post-badge--status-${slugify(incident.status)}">${escapeHtml(incident.status)}</span>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Priority</div>
+            <div class="detail-value">
+              <span class="post-badge post-badge--priority-${slugify(incident.priority)}">${escapeHtml(incident.priority)}</span>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Created</div>
+            <div class="detail-value">${escapeHtml(formatDate(incident.createdDate))}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Created By</div>
+            <div class="detail-value">${escapeHtml(incident.createdBy || "Unknown")}</div>
+          </div>
+          <div class="actions-row">
+            <button type="button" class="btn-primary" id="escalate-btn">Escalate</button>
+            <button type="button" class="btn-secondary" id="back-btn">Back</button>
+          </div>
+          <div id="escalate-form-container" style="margin-top: 16px;"></div>
+        </div>
+      `;
+
+      sdk.root.querySelector("#back-btn").addEventListener("click", () => {
+        renderListView(state.incidents, state.currentPage);
+      });
+
+      sdk.root.querySelector("#escalate-btn").addEventListener("click", () => {
+        renderEscalateForm();
+      });
+    }
+
+    function renderEscalateForm() {
+      const container = sdk.root.querySelector("#escalate-form-container");
+      container.innerHTML = `
+        <div class="form-group">
+          <label class="form-label" for="escalate-reason">Reason <span aria-label="required">*</span></label>
+          <textarea class="form-textarea" id="escalate-reason" placeholder="Explain why this incident needs escalation"></textarea>
+        </div>
+        <div class="actions-row">
+          <button type="button" class="btn-primary" id="submit-escalate">Submit Escalation</button>
+          <button type="button" class="btn-secondary" id="cancel-escalate">Cancel</button>
+        </div>
+      `;
+
+      sdk.root.querySelector("#submit-escalate").addEventListener("click", () => {
+        handleEscalate();
+      });
+
+      sdk.root.querySelector("#cancel-escalate").addEventListener("click", () => {
+        container.innerHTML = "";
+      });
+    }
+
+    async function handleEscalate() {
+      const reasonInput = sdk.root.querySelector("#escalate-reason");
+      const submitBtn = sdk.root.querySelector("#submit-escalate");
+
+      if (!reasonInput.value.trim()) {
+        showMessage("Reason is required to escalate.", "error");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Escalating...";
+      clearMessage();
+
+      try {
+        await connectorsSdk.connectors.execute({
+          permalink: "servicenow-case-escalate",
+          method: "POST",
+          path_parameters: { sysId: state.selectedIncident.sysId },
+          request_body: { reason: reasonInput.value.trim() },
+        });
+
+        showMessage("Incident escalated successfully.", "success");
+        await loadIncidents();
+      } catch (err) {
+        showMessage(err?.message || "Failed to escalate incident.", "error");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Escalation";
+      }
     }
 
     function loadIncidents() {
@@ -264,10 +642,11 @@
       refreshBtn.disabled = true;
       refreshBtn.classList.add("is-spinning");
       contentEl.innerHTML = `<p class="post-status">Loading incidents&hellip;</p>`;
+      clearMessage();
 
       connectorsSdk.connectors
         .execute({
-          permalink: "json-placeholder-get-posts",
+          permalink: "servicenow-cases",
           method: "GET",
         })
         .then((result) => {
@@ -278,7 +657,7 @@
             return;
           }
 
-          renderPage(incidents, 1);
+          renderListView(incidents, 1);
         })
         .catch((err) => {
           contentEl.innerHTML = `<p class="post-status">Failed to load incidents: ${escapeHtml(err && err.message ? err.message : "Unknown error")}</p>`;
@@ -290,6 +669,7 @@
     }
 
     refreshBtn.addEventListener("click", loadIncidents);
+    createBtn.addEventListener("click", renderCreateView);
 
     loadIncidents();
   }
