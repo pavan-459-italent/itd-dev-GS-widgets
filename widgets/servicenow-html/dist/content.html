@@ -1,4 +1,4 @@
-<!-- ServiceNow Widget v6 -->
+<!-- ServiceNow Widget v7 -->
 <style>
 .html-widget-section {
   padding: 16px;
@@ -391,8 +391,10 @@
       state.incidents = incidents;
       state.currentPage = page;
 
+      contentEl.innerHTML = "";
+
       if (!incidents.length) {
-        contentEl.innerHTML = `<p class="post-status">No incidents found.</p>`;
+        contentEl.appendChild(createEl("p", { className: "post-status", textContent: "No incidents found." }));
         return;
       }
 
@@ -400,41 +402,43 @@
       const start = (page - 1) * PAGE_SIZE;
       const pageIncidents = incidents.slice(start, start + PAGE_SIZE);
 
-      const items = pageIncidents
-        .map(
-          (incident) => `
-            <li class="post-item incident-link" data-sysid="${escapeHtml(incident.sysId)}">
-              <p class="post-title">${escapeHtml(incident.caseNumber)} &mdash; ${escapeHtml(incident.title)}</p>
-              <p class="post-body">
-                <span class="post-badge post-badge--status-${slugify(incident.status)}">${escapeHtml(incident.status)}</span>
-                <span class="post-badge post-badge--priority-${slugify(incident.priority)}">${escapeHtml(incident.priority)}</span>
-                <span>${escapeHtml(formatDate(incident.createdDate))}</span>
-              </p>
-            </li>`
-        )
-        .join("");
+      const list = createEl("ul", { className: "post-list", "aria-label": "Incidents" });
 
-      contentEl.innerHTML = `
-        <ul class="post-list" aria-label="Incidents">${items}</ul>
-        <div class="post-pager">
-          <button class="post-pager-btn" id="prev-btn" ${page <= 1 ? "disabled" : ""}>Prev</button>
-          <span class="post-pager-label">Page ${page} of ${totalPages}</span>
-          <button class="post-pager-btn" id="next-btn" ${page >= totalPages ? "disabled" : ""}>Next</button>
-        </div>
-      `;
+      pageIncidents.forEach((incident) => {
+        const title = createEl("p", { className: "post-title", textContent: `${incident.caseNumber} — ${incident.title}` });
+        const statusBadge = createEl("span", { className: `post-badge post-badge--status-${slugify(incident.status)}`, textContent: incident.status });
+        const priorityBadge = createEl("span", { className: `post-badge post-badge--priority-${slugify(incident.priority)}`, textContent: incident.priority });
+        const dateSpan = createEl("span", { textContent: formatDate(incident.createdDate) });
+        const body = createEl("p", { className: "post-body" }, [statusBadge, priorityBadge, dateSpan]);
+        const item = createEl("li", { className: "post-item incident-link", "data-sysid": incident.sysId }, [title, body]);
 
-      sdk.root.querySelectorAll(".incident-link").forEach((el) => {
-        el.addEventListener("click", () => {
-          const sysId = el.getAttribute("data-sysid");
-          const incident = incidents.find((i) => i.sysId === sysId);
-          if (incident) renderDetailView(incident);
+        item.addEventListener("click", () => {
+          const selected = incidents.find((i) => i.sysId === incident.sysId);
+          if (selected) renderDetailView(selected);
         });
+
+        list.appendChild(item);
       });
 
-      sdk.root.querySelector("#prev-btn")?.addEventListener("click", () => {
+      const pager = createEl("div", { className: "post-pager" });
+      const prevBtn = createEl("button", { className: "post-pager-btn", id: "prev-btn", textContent: "Prev", disabled: page <= 1 });
+      const pageLabel = createEl("span", { className: "post-pager-label", textContent: `Page ${page} of ${totalPages}` });
+      const nextBtn = createEl("button", { className: "post-pager-btn", id: "next-btn", textContent: "Next", disabled: page >= totalPages });
+
+      pager.appendChild(prevBtn);
+      pager.appendChild(pageLabel);
+      pager.appendChild(nextBtn);
+
+      contentEl.appendChild(list);
+      contentEl.appendChild(pager);
+
+      prevBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
         if (page > 1) renderListView(incidents, page - 1);
       });
-      sdk.root.querySelector("#next-btn")?.addEventListener("click", () => {
+
+      nextBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
         if (page < totalPages) renderListView(incidents, page + 1);
       });
     }
