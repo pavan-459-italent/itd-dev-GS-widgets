@@ -402,7 +402,7 @@ for widget_dir in "$WIDGETS_DIR"/*; do
 
   WIDGETS_JSON=$(echo "$WIDGETS_JSON" | jq --argjson widget "$widget" '. + [$widget]')
   success "  Processed: $title"
-  ((widget_count++))
+  ((++widget_count))
 done
 
 echo ""
@@ -475,7 +475,7 @@ if [ -d "$STYLESHEETS_DIR" ]; then
 
     STYLESHEETS_JSON=$(echo "$STYLESHEETS_JSON" | jq --argjson ss "$stylesheet" '. + [$ss]')
     success "  Processed: $ss_name"
-    ((stylesheet_count++))
+    ((++stylesheet_count))
   done
 
   if [ $error_count -gt 0 ]; then
@@ -545,7 +545,7 @@ if [ -d "$SCRIPTS_DIR" ]; then
 
     SCRIPTS_JSON=$(echo "$SCRIPTS_JSON" | jq --argjson sc "$script" '. + [$sc]')
     success "  Processed: $sc_name"
-    ((script_count++))
+    ((++script_count))
   done
 
   if [ $error_count -gt 0 ]; then
@@ -691,7 +691,7 @@ for widget_dir in "$WIDGETS_DIR"/*; do
 
     CONNECTORS_JSON=$(echo "$CONNECTORS_JSON" | jq --argjson connector "$c" '. + [$connector]')
     success "  Processed connector: $c_name ($c_permalink)"
-    ((connector_count++))
+    ((++connector_count))
   done
 
   # ---- Composite connectors (steps-based; no top-level url) ----
@@ -801,7 +801,7 @@ for widget_dir in "$WIDGETS_DIR"/*; do
 
     COMPOSITE_CONNECTORS_JSON=$(echo "$COMPOSITE_CONNECTORS_JSON" | jq --argjson connector "$cc" '. + [$connector]')
     success "  Processed composite connector: $cc_name ($cc_permalink)"
-    ((composite_connector_count++))
+    ((++composite_connector_count))
   done
 done
 
