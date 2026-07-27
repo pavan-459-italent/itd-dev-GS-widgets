@@ -171,8 +171,8 @@
       "type": "countries-vue"
     },
     {
-      "title": "ServiceNow Html",
-      "description": "Displays all ServiceNow incidents, 5 per page.",
+      "title": "ServiceNow Topic Incident",
+      "description": "Creates and escalates the ServiceNow incident associated with the current community topic.",
       "category": "Demo",
       "containers": [
         "Sidebar"
@@ -187,7 +187,7 @@
             "name": "title",
             "type": "text",
             "label": "Title",
-            "defaultValue": "ServiceNow",
+            "defaultValue": "ServiceNow Topic Incident",
             "rules": {
               "required": true
             }
@@ -196,13 +196,13 @@
             "name": "description",
             "type": "text",
             "label": "Description",
-            "defaultValue": "Displays all ServiceNow incidents, 5 per page."
+            "defaultValue": "Creates and escalates the ServiceNow incident associated with the current community topic."
           }
         ]
       },
       "defaultConfig": {
-        "title": "ServiceNow",
-        "description": "Displays all ServiceNow incidents, 5 per page."
+        "title": "ServiceNow Topic Incident",
+        "description": "Creates and escalates the ServiceNow incident associated with the current community topic."
       },
       "type": "servicenow-html"
     }

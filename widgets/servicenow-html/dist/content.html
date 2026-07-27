@@ -321,9 +321,9 @@
 </style>
 <section class="html-widget-section">
   <div class="widget-header-row">
-    <p class="widget-framework-header">ServiceNow incidents</p>
+    <p class="widget-framework-header">ServiceNow topic incident</p>
     <div class="header-actions">
-      <button type="button" class="refresh-btn" id="refresh-btn" title="Refresh" aria-label="Refresh incidents">&#8635;</button>
+      <button type="button" class="refresh-btn" id="refresh-btn" title="Refresh" aria-label="Refresh incident">&#8635;</button>
       <button type="button" class="btn-primary" id="create-btn">Create Incident</button>
     </div>
   </div>
@@ -384,6 +384,34 @@
     };
   }
 
+  function normalizeUrl(url) {
+    if (!url) return "";
+    try {
+      const parsedUrl = new URL(url);
+      return `${parsedUrl.origin}${parsedUrl.pathname}`.toLowerCase().replace(/\/+$/, "");
+    } catch {
+      return String(url).toLowerCase().replace(/\/+$/, "").split("?")[0].split("#")[0];
+    }
+  }
+
+  function getTopicContext() {
+    const pageData = window.inSidedData || {};
+    const content = pageData.content || {};
+    const topic = content.topic || content.idea || content.article || null;
+    const title = topic?.title || document.querySelector("h1")?.textContent?.trim() || "";
+
+    return {
+      id: topic?.id ? String(topic.id) : "",
+      title,
+      url: normalizeUrl(window.location.href),
+    };
+  }
+
+  function findTopicIncident(incidents, topicUrl) {
+    if (!topicUrl) return null;
+    return incidents.find((incident) => normalizeUrl((incident.description.match(/https?:\/\/[^\s]+/) || [""])[0]) === topicUrl) || null;
+  }
+
   export async function init(sdk) {
     await sdk.whenReady();
 
@@ -395,10 +423,11 @@
     const createBtn = sdk.root.querySelector("#create-btn");
 
     const state = {
-      view: "list",
+      view: "topic",
       incidents: [],
       currentPage: 1,
       selectedIncident: null,
+      topic: getTopicContext(),
     };
 
     function showMessage(text, type) {
@@ -498,7 +527,7 @@
 
       const titleLabel = createEl("label", { className: "form-label", htmlFor: "create-title", textContent: "Title " });
       titleLabel.appendChild(createEl("span", { "aria-label": "required", textContent: "*" }));
-      const titleInput = createEl("input", { className: "form-input", type: "text", id: "create-title", name: "title", required: true, placeholder: "Brief summary of the issue" });
+      const titleInput = createEl("input", { className: "form-input", type: "text", id: "create-title", name: "title", required: true, placeholder: "Brief summary of the issue", value: state.topic.title ? `[Community] ${state.topic.title}` : "" });
       const titleGroup = createEl("div", { className: "form-group" }, [titleLabel, titleInput]);
 
       const descLabel = createEl("label", { className: "form-label", htmlFor: "create-description", textContent: "Description" });
@@ -564,9 +593,18 @@
         return;
       }
 
+      const descriptionParts = [
+        `Created from Gainsight Community topic: ${state.topic.url}`,
+      ];
+
+      if (state.topic.id) descriptionParts.push(`Topic ID: ${state.topic.id}`);
+      if (descriptionInput.value.trim()) {
+        descriptionParts.push("", "Additional details:", descriptionInput.value.trim());
+      }
+
       const payload = {
         short_description: titleInput.value.trim(),
-        description: descriptionInput.value.trim(),
+        description: descriptionParts.join("\n"),
       };
 
       if (priorityInput.value) payload.priority = priorityInput.value;
@@ -645,7 +683,7 @@
       contentEl.appendChild(detailView);
 
       backBtn.addEventListener("click", () => {
-        renderListView(state.incidents, state.currentPage);
+        loadIncidents();
       });
 
       escalateBtn.addEventListener("click", () => {
@@ -733,13 +771,19 @@
         .then((result) => {
           const rawIncidents = Array.isArray(result) ? result : result?.result ?? [];
           const incidents = rawIncidents.map(normalizeIncident);
+          const topicIncident = findTopicIncident(incidents, state.topic.url);
 
-          if (!incidents.length) {
-            contentEl.innerHTML = `<p class="post-status">No incidents found.</p>`;
+          state.incidents = incidents;
+          state.selectedIncident = topicIncident;
+
+          if (topicIncident) {
+            createBtn.style.display = "none";
+            renderDetailView(topicIncident);
             return;
           }
 
-          renderListView(incidents, 1);
+          createBtn.style.display = "";
+          contentEl.innerHTML = `<p class="post-status">No incident exists for this topic yet.</p>`;
         })
         .catch((err) => {
           contentEl.innerHTML = `<p class="post-status">Failed to load incidents: ${escapeHtml(err && err.message ? err.message : "Unknown error")}</p>`;
