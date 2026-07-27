@@ -399,11 +399,13 @@
     const content = pageData.content || {};
     const topic = content.topic || content.idea || content.article || null;
     const title = topic?.title || document.querySelector("h1")?.textContent?.trim() || "";
+    const isTopicPath = /\/(?:discussions|questions|smartideas|ideas)-\d+\/[^/]+$/.test(window.location.pathname);
 
     return {
       id: topic?.id ? String(topic.id) : "",
       title,
       url: normalizeUrl(window.location.href),
+      isTopicPage: Boolean(topic?.id) || isTopicPath,
     };
   }
 
@@ -415,7 +417,7 @@
   export async function init(sdk) {
     await sdk.whenReady();
 
-    const connectorsSdk = typeof window.WidgetServiceSDK === "function" ? new window.WidgetServiceSDK() : null;
+    const connectorsSdk = sdk;
 
     const contentEl = sdk.root.querySelector("#view-container");
     const messageEl = sdk.root.querySelector("#message-area");
@@ -429,6 +431,11 @@
       selectedIncident: null,
       topic: getTopicContext(),
     };
+
+    if (!state.topic.isTopicPage) {
+      sdk.root.style.display = "none";
+      return;
+    }
 
     function showMessage(text, type) {
       messageEl.innerHTML = `<div class="message-${type}">${escapeHtml(text)}</div>`;
