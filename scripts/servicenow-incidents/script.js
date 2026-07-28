@@ -235,9 +235,13 @@
           btn.textContent = "Escalating...";
           clearMsg();
           apiEscalate(inc.sysId, { reason: reason, priority: "1", state: "2" })
-            .then(function () {
+            .then(function (result) {
               showMsg("Incident escalated successfully.", "success");
-              loadIncidents();
+              if (result && result.sysId) {
+                renderDetail(result);
+              } else {
+                setTimeout(loadIncidents, 1500);
+              }
             })
             .catch(function (e) {
               showMsg(e.message || "Escalation failed.", "error");
@@ -304,7 +308,11 @@
         apiCreate(payload)
           .then(function (result) {
             showMsg("Incident " + (result.caseNumber || "created") + " created successfully.", "success");
-            loadIncidents();
+            if (result && result.sysId) {
+              renderDetail(result);
+            } else {
+              setTimeout(loadIncidents, 1500);
+            }
           })
           .catch(function (e) {
             showMsg(e.message || "Failed to create incident.", "error");
