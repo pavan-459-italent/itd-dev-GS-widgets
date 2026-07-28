@@ -13,9 +13,33 @@
   }
 
   function isTopicPage() {
-    return /\/(?:discussions|questions|smartideas|ideas)-\d+\/[^/]+$/.test(
+    // URL-based detection: matches topic detail paths like /discussions-123/slug, /questions-45/slug, etc.
+    var urlMatch = /\/(?:discussions|questions|conversations|smartideas|ideas|articles)-\d+\/[^/?#]+/.test(
       window.location.pathname
     );
+    if (urlMatch) return true;
+
+    // DOM-based detection: topic detail pages have specific elements that listing pages don't
+    var hasTopicContent = !!(
+      document.querySelector("[class*='topic-detail']") ||
+      document.querySelector("[class*='topicDetail']") ||
+      document.querySelector("[class*='post-detail']") ||
+      document.querySelector("[class*='question-detail']") ||
+      document.querySelector(".qa-q-view") ||
+      document.querySelector("[data-testid='topic-detail']") ||
+      (window.inSidedData && window.inSidedData.content && (window.inSidedData.content.topic || window.inSidedData.content.idea || window.inSidedData.content.article))
+    );
+    if (hasTopicContent) return true;
+
+    // Negative check: listing pages typically have topic lists, tabs like "All Topics"
+    var isListingPage = !!(
+      document.querySelector("[class*='topic-list']") ||
+      document.querySelector("[class*='topicList']") ||
+      document.querySelector(".qa-nav-topics")
+    );
+    if (isListingPage) return false;
+
+    return false;
   }
 
   function getTopic() {
@@ -159,7 +183,7 @@
       '<div class="sn-header">' +
         '<p class="sn-title">ServiceNow Incidents</p>' +
         '<div class="sn-actions">' +
-          '<button type="button" class="sn-refresh" id="sn-refresh" title="Refresh">&#8635;</button>' +
+          '<button type="button" class="sn-refresh" id="sn-refresh" title="Refresh">\u21BB</button>' +
           '<button type="button" class="sn-btn" id="sn-create-btn">Create Incident</button>' +
         '</div>' +
       '</div>' +
