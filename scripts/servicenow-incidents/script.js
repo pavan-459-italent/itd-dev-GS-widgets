@@ -52,7 +52,7 @@
   /* ── API calls via Spring Boot connector ─────────────────────────────── */
 
   function apiGet() {
-    return fetch(API_BASE + "?limit=50", {
+    return fetch(API_BASE + "?limit=200", {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -186,10 +186,30 @@
 
     function findTopicIncident(incidents) {
       var topicUrl = topic.url.toLowerCase();
-      for (var i = 0; i < incidents.length; i++) {
-        var desc = String(incidents[i].description || "").toLowerCase();
+      var topicTitle = topic.title.toLowerCase().trim();
+      var i, desc, incTitle;
+
+      // Strategy 1: Match by topic URL found in incident description
+      for (i = 0; i < incidents.length; i++) {
+        desc = String(incidents[i].description || "").toLowerCase();
         if (desc.indexOf(topicUrl) !== -1) return incidents[i];
       }
+
+      // Strategy 2: Match by topic title in incident title (created as "[Community] Topic Title")
+      if (topicTitle) {
+        for (i = 0; i < incidents.length; i++) {
+          incTitle = String(incidents[i].title || "").toLowerCase();
+          if (incTitle.indexOf("[community]") !== -1 && incTitle.indexOf(topicTitle) !== -1) return incidents[i];
+        }
+      }
+
+      // Strategy 3: Partial URL match (handles trailing slashes or minor differences)
+      var pathOnly = window.location.pathname.toLowerCase().replace(/\/+$/, "");
+      for (i = 0; i < incidents.length; i++) {
+        desc = String(incidents[i].description || "").toLowerCase();
+        if (desc.indexOf(pathOnly) !== -1) return incidents[i];
+      }
+
       return null;
     }
 
