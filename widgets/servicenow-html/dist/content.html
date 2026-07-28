@@ -357,30 +357,15 @@
   }
 
   function normalizeIncident(incident) {
-    const statusByState = {
-      "1": "New",
-      "2": "In Progress",
-      "3": "On Hold",
-      "6": "Resolved",
-      "7": "Closed",
-    };
-    const priorityByValue = {
-      "1": "Critical",
-      "2": "High",
-      "3": "Moderate",
-      "4": "Low",
-      "5": "Planning",
-    };
-
     return {
-      sysId: incident.sys_id,
-      caseNumber: incident.number,
-      title: incident.short_description || "Untitled incident",
+      sysId: incident.sysId || incident.sys_id,
+      caseNumber: incident.caseNumber || incident.number,
+      title: incident.title || incident.short_description || "Untitled incident",
       description: incident.description || "",
-      status: statusByState[String(incident.state)] || incident.state || "Unknown",
-      priority: priorityByValue[String(incident.priority)] || incident.priority || "Unknown",
-      createdBy: typeof incident.opened_by === "object" ? incident.opened_by.display_value : incident.opened_by,
-      createdDate: incident.opened_at,
+      status: incident.status || "Unknown",
+      priority: incident.priority || "Unknown",
+      createdBy: incident.createdBy || incident.opened_by || "Unknown",
+      createdDate: incident.createdDate || incident.opened_at,
     };
   }
 
@@ -610,7 +595,7 @@
       }
 
       const payload = {
-        short_description: titleInput.value.trim(),
+        title: titleInput.value.trim(),
         description: descriptionParts.join("\n"),
       };
 
@@ -629,7 +614,7 @@
           payload: payload,
         });
 
-        showMessage(`Incident ${escapeHtml(result?.result?.number || "created")} created successfully.`, "success");
+        showMessage(`Incident ${escapeHtml(result?.caseNumber || result?.result?.number || "created")} created successfully.`, "success");
         await loadIncidents();
       } catch (err) {
         showMessage(err?.message || "Failed to create incident.", "error");
@@ -739,14 +724,14 @@
       try {
         await connectorsSdk.connectors.execute({
           permalink: "servicenow-case-escalate",
-          method: "PATCH",
+          method: "POST",
           pathParams: {
             sys_id: state.selectedIncident.sysId,
           },
           payload: {
+            reason: reasonInput.value.trim(),
             priority: "1",
             state: "2",
-            comments: reasonInput.value.trim(),
           },
         });
 
@@ -776,7 +761,7 @@
           method: "GET",
         })
         .then((result) => {
-          const rawIncidents = Array.isArray(result) ? result : result?.result ?? [];
+          const rawIncidents = Array.isArray(result) ? result : result?.result ?? result?.data ?? [];
           const incidents = rawIncidents.map(normalizeIncident);
           const topicIncident = findTopicIncident(incidents, state.topic.url);
 

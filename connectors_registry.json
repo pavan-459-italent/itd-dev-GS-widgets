@@ -24,7 +24,7 @@
     {
       "name": "ServiceNow Cases",
       "permalink": "servicenow-cases",
-      "url": "https://dev438610.service-now.com/api/now/table/incident",
+      "url": "https://compactly-written-jolt.ngrok-free.dev/api/servicenow/cases",
       "method": "GET",
       "authentication": {
         "type": "none"
@@ -34,28 +34,6 @@
           "key": "Accept",
           "value": "application/json",
           "overridable": false
-        },
-        {
-          "key": "Authorization",
-          "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
-          "overridable": false
-        }
-      ],
-      "query_parameters": [
-        {
-          "key": "sysparm_query",
-          "value": "active=true",
-          "overridable": false
-        },
-        {
-          "key": "sysparm_fields",
-          "value": "sys_id,number,short_description,description,state,priority,opened_at,opened_by",
-          "overridable": false
-        },
-        {
-          "key": "sysparm_exclude_reference_link",
-          "value": "true",
-          "overridable": false
         }
       ],
       "response_content_type": "application/json"
@@ -63,7 +41,7 @@
     {
       "name": "ServiceNow Case Create",
       "permalink": "servicenow-case-create",
-      "url": "https://dev438610.service-now.com/api/now/table/incident",
+      "url": "https://compactly-written-jolt.ngrok-free.dev/api/servicenow/cases",
       "method": "POST",
       "authentication": {
         "type": "none"
@@ -78,18 +56,6 @@
           "key": "Content-Type",
           "value": "application/json",
           "overridable": false
-        },
-        {
-          "key": "Authorization",
-          "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
-          "overridable": false
-        }
-      ],
-      "query_parameters": [
-        {
-          "key": "sysparm_exclude_reference_link",
-          "value": "true",
-          "overridable": false
         }
       ],
       "response_content_type": "application/json"
@@ -97,8 +63,8 @@
     {
       "name": "ServiceNow Case Escalate",
       "permalink": "servicenow-case-escalate",
-      "url": "https://dev438610.service-now.com/api/now/table/incident/{{ pathParams.sys_id }}",
-      "method": "PATCH",
+      "url": "https://compactly-written-jolt.ngrok-free.dev/api/servicenow/cases/{{ pathParams.sys_id }}/escalate",
+      "method": "POST",
       "authentication": {
         "type": "none"
       },
@@ -116,11 +82,6 @@
         {
           "key": "Content-Type",
           "value": "application/json",
-          "overridable": false
-        },
-        {
-          "key": "Authorization",
-          "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
           "overridable": false
         }
       ],
