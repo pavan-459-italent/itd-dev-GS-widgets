@@ -13,11 +13,10 @@
   }
 
   function isTopicPage() {
-    // Strict URL-only detection: topic detail pages follow the pattern /type-ID/slug
-    // e.g. /smartideas-95/add-dark-mode-546, /discussions-12/some-topic-title
-    return /\/(?:discussions|questions|conversations|smartideas|ideas|articles)-\d+\/[^/?#]+/.test(
-      window.location.pathname
-    );
+    // Generic detection: topic detail pages follow /category-ID/slug (two segments, first ends with -NUMBER)
+    // e.g. /smartideas-95/topic-slug, /discussions-12/title, /gg-internal-notes-v0-66/heyo-544
+    // Category/listing pages like /smartconx-93 (single segment) will NOT match
+    return /^\/[^/]+-\d+\/[^/?#]+/.test(window.location.pathname);
   }
 
   function getTopic() {
