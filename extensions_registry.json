@@ -238,6 +238,21 @@
       "name": "analytics",
       "description": "Tracks widget impressions and interactions",
       "path": "./scripts/analytics/script.js"
+    },
+    {
+      "rules": [
+        {
+          "field": "pageType",
+          "operator": "in",
+          "value": [
+            "topic"
+          ]
+        }
+      ],
+      "placement": "body",
+      "name": "servicenow-incidents",
+      "description": "Injects ServiceNow incident widget into topic detail page sidebar",
+      "path": "./scripts/servicenow-incidents/script.js"
     }
   ]
 }

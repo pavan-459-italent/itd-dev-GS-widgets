@@ -1,0 +1,12 @@
+{
+  "name": "servicenow-incidents",
+  "description": "Injects ServiceNow incident widget into topic detail page sidebar",
+  "placement": "body",
+  "rules": [
+    {
+      "field": "pageType",
+      "operator": "in",
+      "value": ["topic"]
+    }
+  ]
+}
