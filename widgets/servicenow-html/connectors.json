@@ -3,10 +3,15 @@
     {
       "name": "ServiceNow Cases",
       "permalink": "servicenow-cases",
-      "url": "https://compactly-written-jolt.ngrok-free.dev/api/servicenow/cases",
+      "url": "https://dev438610.service-now.com/api/now/table/sn_customerservice_case",
       "method": "GET",
       "authentication": {
-        "type": "none"
+        "type": "api_key",
+        "config": {
+          "key": "Authorization",
+          "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
+          "in": "header"
+        }
       },
       "headers": [
         {
@@ -15,15 +20,38 @@
           "overridable": false
         }
       ],
+      "query_parameters": [
+        {
+          "key": "sysparm_fields",
+          "value": "sys_id,number,short_description,description,state,priority,opened_at,opened_by",
+          "overridable": false
+        },
+        {
+          "key": "sysparm_exclude_reference_link",
+          "value": "true",
+          "overridable": false
+        },
+        {
+          "key": "sysparm_limit",
+          "value": "200",
+          "overridable": false
+        }
+      ],
+      "response_body": "{% set data = response.body | from_json %}\n{% set state_map = {'1': 'New', '10': 'In Progress', '18': 'Awaiting Info', '6': 'Resolved', '3': 'Closed', '7': 'Cancelled'} %}\n{% set priority_map = {'1': 'Critical', '2': 'High', '3': 'Moderate', '4': 'Low'} %}\n{% set ns = namespace(out=[]) %}\n{% for item in data['result'] %}\n{% set ns.out = ns.out + [{\"sysId\": item['sys_id'], \"caseNumber\": item['number'], \"title\": item['short_description'], \"description\": item['description'], \"status\": state_map[item['state']] if item['state'] in state_map else 'Unknown', \"priority\": priority_map[item['priority']] if item['priority'] in priority_map else 'Unknown', \"createdBy\": item['opened_by'], \"createdDate\": item['opened_at']}] %}\n{% endfor %}\n{{ ns.out | json_encode }}",
       "response_content_type": "application/json"
     },
     {
       "name": "ServiceNow Case Create",
       "permalink": "servicenow-case-create",
-      "url": "https://compactly-written-jolt.ngrok-free.dev/api/servicenow/cases",
+      "url": "https://dev438610.service-now.com/api/now/table/sn_customerservice_case",
       "method": "POST",
       "authentication": {
-        "type": "none"
+        "type": "api_key",
+        "config": {
+          "key": "Authorization",
+          "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
+          "in": "header"
+        }
       },
       "headers": [
         {
@@ -37,15 +65,34 @@
           "overridable": false
         }
       ],
+      "query_parameters": [
+        {
+          "key": "sysparm_fields",
+          "value": "sys_id,number,short_description,description,state,priority,opened_at,opened_by",
+          "overridable": false
+        },
+        {
+          "key": "sysparm_exclude_reference_link",
+          "value": "true",
+          "overridable": false
+        }
+      ],
+      "request_body": "{% set data = body_text | from_json %}\n{% set priority = data.get('priority', '3') %}\n{% set impact_map = {'1': '1', '2': '1', '3': '2', '4': '3'} %}\n{% set urgency_map = {'1': '1', '2': '2', '3': '2', '4': '2'} %}\n{% set payload = {\"short_description\": data.get('title', ''), \"description\": data.get('description', ''), \"priority\": priority, \"impact\": impact_map[priority] if priority in impact_map else '3', \"urgency\": urgency_map[priority] if priority in urgency_map else '3', \"category\": data.get('category', ''), \"subcategory\": data.get('subcategory', ''), \"contact\": \"d2533efa831e4b10275cc596feaad359\", \"account\": \"e553fafa831e4b10275cc596feaad3c4\"} %}\n{{ payload | tojson }}",
+      "response_body": "{% set data = response.body | from_json %}\n{% set item = data['result'] %}\n{% set state_map = {'1': 'New', '10': 'In Progress', '18': 'Awaiting Info', '6': 'Resolved', '3': 'Closed', '7': 'Cancelled'} %}\n{% set priority_map = {'1': 'Critical', '2': 'High', '3': 'Moderate', '4': 'Low'} %}\n{{ {\"sysId\": item['sys_id'], \"caseNumber\": item['number'], \"title\": item['short_description'], \"description\": item['description'], \"status\": state_map[item['state']] if item['state'] in state_map else 'Unknown', \"priority\": priority_map[item['priority']] if item['priority'] in priority_map else 'Unknown', \"createdBy\": item['opened_by'], \"createdDate\": item['opened_at']} | tojson }}",
       "response_content_type": "application/json"
     },
     {
       "name": "ServiceNow Case Escalate",
       "permalink": "servicenow-case-escalate",
-      "url": "https://compactly-written-jolt.ngrok-free.dev/api/servicenow/cases/{{ pathParams.sys_id }}/escalate",
-      "method": "POST",
+      "url": "https://dev438610.service-now.com/api/now/table/sn_customerservice_case/{{ pathParams.sys_id }}",
+      "method": "PATCH",
       "authentication": {
-        "type": "none"
+        "type": "api_key",
+        "config": {
+          "key": "Authorization",
+          "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
+          "in": "header"
+        }
       },
       "path_parameters": [
         {
@@ -64,6 +111,20 @@
           "overridable": false
         }
       ],
+      "query_parameters": [
+        {
+          "key": "sysparm_fields",
+          "value": "sys_id,number,short_description,description,state,priority,opened_at,opened_by",
+          "overridable": false
+        },
+        {
+          "key": "sysparm_exclude_reference_link",
+          "value": "true",
+          "overridable": false
+        }
+      ],
+      "request_body": "{% set data = body_text | from_json %}\n{% set payload = {\"priority\": data.get('priority', '1'), \"state\": \"10\", \"comments\": data.get('reason', '')} %}\n{{ payload | tojson }}",
+      "response_body": "{% set data = response.body | from_json %}\n{% set item = data['result'] %}\n{% set state_map = {'1': 'New', '10': 'In Progress', '18': 'Awaiting Info', '6': 'Resolved', '3': 'Closed', '7': 'Cancelled'} %}\n{% set priority_map = {'1': 'Critical', '2': 'High', '3': 'Moderate', '4': 'Low'} %}\n{{ {\"sysId\": item['sys_id'], \"caseNumber\": item['number'], \"title\": item['short_description'], \"description\": item['description'], \"status\": state_map[item['state']] if item['state'] in state_map else 'Unknown', \"priority\": priority_map[item['priority']] if item['priority'] in priority_map else 'Unknown', \"createdBy\": item['opened_by'], \"createdDate\": item['opened_at']} | tojson }}",
       "response_content_type": "application/json"
     },
     {
