@@ -245,13 +245,13 @@
           "field": "pageType",
           "operator": "in",
           "value": [
-            "topic"
+            "global"
           ]
         }
       ],
       "placement": "bodyEnd",
       "name": "servicenow-cases",
-      "description": "Injects ServiceNow Case panel into topic detail page sidebar via Connectors SDK (no middleware)",
+      "description": "Injects ServiceNow Case panel into topic detail page sidebar via Connectors SDK (no middleware). Loads globally; the script's own isTopicPage() check gates rendering since 'topic' is not a valid pageType rule value.",
       "path": "./scripts/servicenow-cases/script.js"
     }
   ]

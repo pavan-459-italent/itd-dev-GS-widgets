@@ -1,12 +1,5 @@
 {
   "name": "servicenow-cases",
-  "description": "Injects ServiceNow Case panel into topic detail page sidebar via Connectors SDK (no middleware)",
-  "placement": "bodyEnd",
-  "rules": [
-    {
-      "field": "pageType",
-      "operator": "in",
-      "value": ["topic"]
-    }
-  ]
+  "description": "Injects ServiceNow Case panel into topic detail page sidebar via Connectors SDK (no middleware). Loads globally; the script's own isTopicPage() check gates rendering since 'topic' is not a valid pageType rule value.",
+  "placement": "bodyEnd"
 }
