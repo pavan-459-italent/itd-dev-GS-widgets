@@ -73,9 +73,11 @@
       "method": "GET",
       "authentication": {
         "type": "api_key",
-        "key": "Authorization",
-        "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
-        "in": "header"
+        "config": {
+          "key": "Authorization",
+          "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
+          "in": "header"
+        }
       },
       "headers": [
         {
