@@ -1,4 +1,5 @@
 {
   "name": "analytics",
-  "description": "Tracks widget impressions and interactions"
+  "description": "Tracks widget impressions and interactions",
+  "rules": []
 }

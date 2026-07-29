@@ -225,33 +225,17 @@
   ],
   "scripts": [
     {
-      "rules": [
-        {
-          "field": "pageType",
-          "operator": "in",
-          "value": [
-            "global"
-          ]
-        }
-      ],
+      "rules": [],
       "placement": "head",
       "name": "analytics",
       "description": "Tracks widget impressions and interactions",
       "path": "./scripts/analytics/script.js"
     },
     {
-      "rules": [
-        {
-          "field": "pageType",
-          "operator": "in",
-          "value": [
-            "global"
-          ]
-        }
-      ],
+      "rules": [],
       "placement": "bodyEnd",
       "name": "servicenow-cases",
-      "description": "Injects ServiceNow Case panel into topic detail page sidebar via Connectors SDK (no middleware). Loads globally; the script's own isTopicPage() check gates rendering since 'topic' is not a valid pageType rule value.",
+      "description": "Injects ServiceNow Case panel into topic detail page sidebar via Connectors SDK (no middleware). Loads globally via empty rules array; the script's own isTopicPage() check gates rendering since 'topic' is not a valid pageType rule value.",
       "path": "./scripts/servicenow-cases/script.js"
     }
   ]
