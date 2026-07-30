@@ -11,6 +11,10 @@
     return d.innerHTML;
   }
 
+  function isTopicPage() {
+    return /^\/[^/]+-\d+\/[^/?#]+/.test(window.location.pathname);
+  }
+
   function findSidebar() {
     var selectors = [".module.Sidebarmodule", ".qa-div-sidebar", "aside", "[class*='sidebar']"];
     for (var i = 0; i < selectors.length; i++) {
@@ -116,7 +120,7 @@
   /* ── main widget ─────────────────────────────────────────────────────── */
 
   function init() {
-    if (document.getElementById(PANEL_ID)) return;
+    if (isTopicPage() || document.getElementById(PANEL_ID)) return;
 
     if (!window.WidgetServiceSDK) {
       setTimeout(init, 500);
@@ -143,12 +147,7 @@
       '<div id="sn-my-msg-area"></div>' +
       '<div id="sn-my-body"><p class="sn-status">Loading your cases&hellip;</p></div>';
 
-    var topicPanel = document.getElementById("sn-topic-case-panel");
-    if (topicPanel && topicPanel.parentNode === sidebar) {
-      sidebar.insertBefore(root, topicPanel.nextSibling);
-    } else {
-      sidebar.insertBefore(root, sidebar.firstChild);
-    }
+    sidebar.insertBefore(root, sidebar.firstChild);
 
     var body = root.querySelector("#sn-my-body");
     var msgArea = root.querySelector("#sn-my-msg-area");
