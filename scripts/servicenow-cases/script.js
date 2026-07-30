@@ -138,7 +138,9 @@
       return;
     }
 
-    var sidebar = document.querySelector(".qa-div-sidebar, aside, [class*='sidebar']");
+    var sidebar =
+      document.querySelector(".module.Sidebarmodule") ||
+      document.querySelector(".qa-div-sidebar, aside, [class*='sidebar']");
     if (!sidebar) {
       setTimeout(init, 500);
       return;
