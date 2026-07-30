@@ -237,6 +237,13 @@
       "name": "servicenow-cases",
       "description": "Injects ServiceNow Case panel into topic detail page sidebar via Connectors SDK (no middleware). Loads globally via empty rules array; the script's own isTopicPage() check gates rendering since 'topic' is not a valid pageType rule value.",
       "path": "./scripts/servicenow-cases/script.js"
+    },
+    {
+      "rules": [],
+      "placement": "bodyEnd",
+      "name": "servicenow-my-cases",
+      "description": "Injects a community-wide 'My ServiceNow Cases' panel showing all Cases created by the currently logged-in user via Connectors SDK (no middleware). Loads globally (empty rules array); the script's own isTopicPage() check skips rendering on topic detail pages, where the separate servicenow-cases topic-linking panel already renders.",
+      "path": "./scripts/servicenow-my-cases/script.js"
     }
   ]
 }
