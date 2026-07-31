@@ -167,13 +167,14 @@
     root.id = PANEL_ID;
     root.innerHTML =
       '<div class="sn-header">' +
-        '<p class="sn-title">ServiceNow Cases</p>' +
+        '<p class="sn-title">Support Cases</p>' +
         '<div class="sn-actions">' +
           '<button type="button" class="sn-refresh" id="sn-refresh" title="Refresh">\u21BB</button>' +
           '<button type="button" class="sn-btn" id="sn-create-btn">Create Case</button>' +
         '</div>' +
       '</div>' +
       '<div id="sn-msg-area"></div>' +
+      '<p class="sn-subheader">This Topic\'s Case</p>' +
       '<div id="sn-body"><p class="sn-status">Loading cases&hellip;</p></div>' +
       '<hr class="sn-divider">' +
       '<p class="sn-subheader">My ServiceNow Cases</p>' +
