@@ -113,7 +113,7 @@
       "@keyframes sn-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}" +
       "#" + PANEL_ID + " .sn-status{font-size:0.75rem;color:#5a5a72;padding:8px 0}" +
       "#" + PANEL_ID + " .sn-card{padding:10px;border:1px solid #bfdbfe;border-radius:8px;background:#fff;font-size:0.8125rem;margin-bottom:8px}" +
-      "#" + PANEL_ID + " .sn-card-title{font-weight:600;color:#1e1e2e;margin:0 0 4px}" +
+      "#" + PANEL_ID + " .sn-card-title{font-weight:600;color:#1e1e2e;margin:0 0 4px;line-height:1.3;min-height:2.6em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis}" +
       "#" + PANEL_ID + " .sn-card-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:0.6875rem;color:#5a5a72}" +
       "#" + PANEL_ID + " .sn-badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.625rem;font-weight:600;color:#fff;background:#8a8aa3;text-transform:uppercase}" +
       "#" + PANEL_ID + " .sn-badge-critical,#" + PANEL_ID + " .sn-badge-high{background:#d9455f}" +
@@ -136,7 +136,7 @@
       "#" + PANEL_ID + " .sn-detail-desc{background:#fff;padding:10px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);white-space:pre-wrap}" +
       "#" + PANEL_ID + " .sn-divider{border:none;border-top:1px dashed #7fb8d6;margin:16px 0 12px}" +
       "#" + PANEL_ID + " .sn-subheader{margin:0 0 8px;font-size:0.75rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#0a5a8a}" +
-      "#" + PANEL_ID + " .sn-mine-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto}" +
+      "#" + PANEL_ID + " .sn-mine-list{display:flex;flex-direction:column;gap:8px;max-height:270px;overflow-y:auto}" +
       "#" + PANEL_ID + " .sn-mine-card{padding:10px;border:1px solid #d8ecf4;border-left:3px solid #4FC1E8;border-radius:8px;background:#f7fcfe;font-size:0.8125rem;cursor:pointer}" +
       "#" + PANEL_ID + " .sn-mine-card:hover{border-color:#0E6FFF}";
     document.head.appendChild(s);
@@ -235,7 +235,7 @@
       cases.forEach(function (c, idx) {
         html +=
           '<div class="sn-mine-card" data-mine-idx="' + idx + '">' +
-            '<p class="sn-card-title">' + esc(c.caseNumber) + " — " + esc(c.title) + "</p>" +
+            '<p class="sn-card-title" title="' + esc(c.caseNumber + " — " + c.title) + '">' + esc(c.caseNumber) + " — " + esc(c.title) + "</p>" +
             '<div class="sn-card-meta">' +
               '<span class="sn-badge sn-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span>" +
               '<span class="sn-badge sn-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span>" +
@@ -260,14 +260,17 @@
           detail.style.display = "";
           detail.innerHTML =
             (c.description ? '<div class="sn-detail-row" style="margin-top:8px"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(c.description) + "</div></div>" : "") +
-            '<div class="sn-row">' +
+            '<div class="sn-row" data-mine-actions="' + idx + '">' +
               '<button type="button" class="sn-btn" data-mine-escalate="' + idx + '">Escalate</button>' +
             "</div>" +
             '<div data-mine-esc-form="' + idx + '"></div>';
 
+          var mineActions = detail.querySelector("[data-mine-actions]");
+
           detail.querySelector("[data-mine-escalate]").onclick = function (e) {
             e.stopPropagation();
             var formHolder = detail.querySelector("[data-mine-esc-form]");
+            mineActions.style.display = "none";
             formHolder.innerHTML =
               '<div class="sn-form-group" style="margin-top:12px">' +
                 '<label class="sn-label">Reason *</label>' +
@@ -281,6 +284,7 @@
             formHolder.querySelector("[data-mine-esc-cancel]").onclick = function (ev) {
               ev.stopPropagation();
               formHolder.innerHTML = "";
+              mineActions.style.display = "";
             };
             formHolder.querySelector("[data-mine-esc-submit]").onclick = function (ev) {
               ev.stopPropagation();
@@ -337,15 +341,18 @@
           "</div>" +
         "</div>" +
         (c.description ? '<div class="sn-detail-row"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(c.description) + "</div></div>" : "") +
-        '<div class="sn-row">' +
+        '<div class="sn-row" id="sn-detail-actions">' +
           '<button type="button" class="sn-btn" id="sn-escalate-btn">Escalate</button>' +
           '<button type="button" class="sn-btn sn-btn-sec" id="sn-back-btn">Back</button>' +
         "</div>" +
         '<div id="sn-escalate-form"></div>';
 
+      var detailActions = root.querySelector("#sn-detail-actions");
+
       root.querySelector("#sn-back-btn").onclick = loadCases;
       root.querySelector("#sn-escalate-btn").onclick = function () {
         var container = root.querySelector("#sn-escalate-form");
+        detailActions.style.display = "none";
         container.innerHTML =
           '<div class="sn-form-group" style="margin-top:12px">' +
             '<label class="sn-label">Reason *</label>' +
@@ -356,7 +363,10 @@
             '<button type="button" class="sn-btn sn-btn-sec" id="sn-esc-cancel">Cancel</button>' +
           "</div>";
 
-        root.querySelector("#sn-esc-cancel").onclick = function () { container.innerHTML = ""; };
+        root.querySelector("#sn-esc-cancel").onclick = function () {
+          container.innerHTML = "";
+          detailActions.style.display = "";
+        };
         root.querySelector("#sn-esc-submit").onclick = function () {
           var reason = root.querySelector("#sn-esc-reason").value.trim();
           if (!reason) { showMsg("Reason is required.", "error"); return; }
