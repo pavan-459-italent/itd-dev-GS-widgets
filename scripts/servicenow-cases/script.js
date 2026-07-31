@@ -138,7 +138,10 @@
       "#" + PANEL_ID + " .sn-subheader{margin:0 0 8px;font-size:0.75rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#0a5a8a}" +
       "#" + PANEL_ID + " .sn-mine-list{display:flex;flex-direction:column;gap:8px;max-height:270px;overflow-y:auto}" +
       "#" + PANEL_ID + " .sn-mine-card{padding:10px;border:1px solid #d8ecf4;border-left:3px solid #4FC1E8;border-radius:8px;background:#f7fcfe;font-size:0.8125rem;cursor:pointer}" +
-      "#" + PANEL_ID + " .sn-mine-card:hover{border-color:#0E6FFF}";
+      "#" + PANEL_ID + " .sn-mine-card:hover{border-color:#0E6FFF}" +
+      "#" + PANEL_ID + " #sn-back-btn{display:none}" +
+      "#" + PANEL_ID + " .sn-chevron{display:inline-block;margin-left:6px;font-size:0.7em;color:#5a5a72;transition:transform 0.15s ease}" +
+      "#" + PANEL_ID + " .sn-mine-card.sn-expanded .sn-chevron{transform:rotate(180deg)}";
     document.head.appendChild(s);
   }
 
@@ -174,7 +177,7 @@
         '</div>' +
       '</div>' +
       '<div id="sn-msg-area"></div>' +
-      '<p class="sn-subheader">This Topic\'s Case</p>' +
+      '<p class="sn-subheader">Related Case</p>' +
       '<div id="sn-body"><p class="sn-status">Loading cases&hellip;</p></div>' +
       '<hr class="sn-divider">' +
       '<p class="sn-subheader">My ServiceNow Cases</p>' +
@@ -235,7 +238,7 @@
       cases.forEach(function (c, idx) {
         html +=
           '<div class="sn-mine-card" data-mine-idx="' + idx + '">' +
-            '<p class="sn-card-title" title="' + esc(c.caseNumber + " — " + c.title) + '">' + esc(c.caseNumber) + " — " + esc(c.title) + "</p>" +
+            '<p class="sn-card-title" title="' + esc(c.caseNumber + " — " + c.title) + '">' + esc(c.caseNumber) + " — " + esc(c.title) + '<span class="sn-chevron">\u25BC</span></p>' +
             '<div class="sn-card-meta">' +
               '<span class="sn-badge sn-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span>" +
               '<span class="sn-badge sn-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span>" +
@@ -247,6 +250,11 @@
       html += "</div>";
       mineBody.innerHTML = html;
 
+      function collapseAll() {
+        mineBody.querySelectorAll(".sn-mine-detail").forEach(function (d) { d.style.display = "none"; });
+        mineBody.querySelectorAll(".sn-mine-card").forEach(function (cd) { cd.classList.remove("sn-expanded"); });
+      }
+
       mineBody.querySelectorAll(".sn-mine-card").forEach(function (card) {
         card.onclick = function (evt) {
           if (evt.target.closest(".sn-mine-detail")) return;
@@ -254,16 +262,23 @@
           var c = cases[idx];
           var detail = card.querySelector(".sn-mine-detail");
           var isOpen = detail.style.display !== "none";
-          mineBody.querySelectorAll(".sn-mine-detail").forEach(function (d) { d.style.display = "none"; });
+          collapseAll();
           if (isOpen) return;
 
+          card.classList.add("sn-expanded");
           detail.style.display = "";
           detail.innerHTML =
             (c.description ? '<div class="sn-detail-row" style="margin-top:8px"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(c.description) + "</div></div>" : "") +
             '<div class="sn-row" data-mine-actions="' + idx + '">' +
               '<button type="button" class="sn-btn" data-mine-escalate="' + idx + '">Escalate</button>' +
+              '<button type="button" class="sn-btn sn-btn-sec" data-mine-close="' + idx + '">Close</button>' +
             "</div>" +
             '<div data-mine-esc-form="' + idx + '"></div>';
+
+          detail.querySelector("[data-mine-close]").onclick = function (e) {
+            e.stopPropagation();
+            collapseAll();
+          };
 
           var mineActions = detail.querySelector("[data-mine-actions]");
 
