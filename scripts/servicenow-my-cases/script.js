@@ -91,10 +91,12 @@
       "#" + PANEL_ID + " .sn-spin{animation:sn-spin 0.6s linear infinite}" +
       "@keyframes sn-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}" +
       "#" + PANEL_ID + " .sn-status{font-size:0.75rem;color:#5a5a72;padding:8px 0}" +
-      "#" + PANEL_ID + " .sn-list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto}" +
+      "#" + PANEL_ID + " .sn-list{display:flex;flex-direction:column;gap:8px;max-height:270px;overflow-y:auto}" +
       "#" + PANEL_ID + " .sn-card{padding:10px;border:1px solid #bfdbfe;border-radius:8px;background:#fff;font-size:0.8125rem;cursor:pointer}" +
       "#" + PANEL_ID + " .sn-card:hover{border-color:#0E6FFF}" +
-      "#" + PANEL_ID + " .sn-card-title{font-weight:600;color:#1e1e2e;margin:0 0 4px}" +
+      "#" + PANEL_ID + " .sn-card-title{font-weight:600;color:#1e1e2e;margin:0 0 4px;line-height:1.3;min-height:2.6em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis}" +
+      "#" + PANEL_ID + " .sn-chevron{display:inline-block;margin-left:6px;font-size:0.7em;color:#5a5a72;transition:transform 0.15s ease}" +
+      "#" + PANEL_ID + " .sn-card.sn-expanded .sn-chevron{transform:rotate(180deg)}" +
       "#" + PANEL_ID + " .sn-card-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:0.6875rem;color:#5a5a72}" +
       "#" + PANEL_ID + " .sn-badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.625rem;font-weight:600;color:#fff;background:#8a8aa3;text-transform:uppercase}" +
       "#" + PANEL_ID + " .sn-badge-critical,#" + PANEL_ID + " .sn-badge-high{background:#d9455f}" +
@@ -162,65 +164,7 @@
 
     function clearMsg() { msgArea.innerHTML = ""; }
 
-    /* ── detail view ──────────────────────────────────────────────────── */
-
-    function renderDetail(c) {
-      body.innerHTML =
-        '<div class="sn-card" style="cursor:default">' +
-          '<p class="sn-card-title">' + esc(c.caseNumber) + " \u2014 " + esc(c.title) + "</p>" +
-          '<div class="sn-card-meta">' +
-            '<span class="sn-badge sn-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span>" +
-            '<span class="sn-badge sn-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span>" +
-            "<span>" + esc(formatDate(c.createdDate)) + "</span>" +
-          "</div>" +
-        "</div>" +
-        (c.description ? '<div class="sn-detail-row"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(c.description) + "</div></div>" : "") +
-        '<div class="sn-row">' +
-          '<button type="button" class="sn-btn" id="sn-my-escalate-btn">Escalate</button>' +
-          '<button type="button" class="sn-btn sn-btn-sec" id="sn-my-back-btn">Back to list</button>' +
-        "</div>" +
-        '<div id="sn-my-escalate-form"></div>';
-
-      root.querySelector("#sn-my-back-btn").onclick = loadMyCases;
-      root.querySelector("#sn-my-escalate-btn").onclick = function () {
-        var container = root.querySelector("#sn-my-escalate-form");
-        container.innerHTML =
-          '<div class="sn-form-group" style="margin-top:12px">' +
-            '<label class="sn-label">Reason *</label>' +
-            '<textarea class="sn-textarea" id="sn-my-esc-reason" placeholder="Explain why this case needs escalation"></textarea>' +
-          "</div>" +
-          '<div class="sn-row">' +
-            '<button type="button" class="sn-btn" id="sn-my-esc-submit">Submit Escalation</button>' +
-            '<button type="button" class="sn-btn sn-btn-sec" id="sn-my-esc-cancel">Cancel</button>' +
-          "</div>";
-
-        root.querySelector("#sn-my-esc-cancel").onclick = function () { container.innerHTML = ""; };
-        root.querySelector("#sn-my-esc-submit").onclick = function () {
-          var reason = root.querySelector("#sn-my-esc-reason").value.trim();
-          if (!reason) { showMsg("Reason is required.", "error"); return; }
-          var btn = root.querySelector("#sn-my-esc-submit");
-          btn.disabled = true;
-          btn.textContent = "Escalating...";
-          clearMsg();
-          apiEscalate(c.sysId, { reason: reason, priority: "1", state: "10" })
-            .then(function (result) {
-              showMsg("Case escalated successfully.", "success");
-              if (result && result.sysId) {
-                renderDetail(result);
-              } else {
-                setTimeout(loadMyCases, 1500);
-              }
-            })
-            .catch(function (e) {
-              showMsg(e.message || "Escalation failed.", "error");
-              btn.disabled = false;
-              btn.textContent = "Submit Escalation";
-            });
-        };
-      };
-    }
-
-    /* ── list view ────────────────────────────────────────────────────── */
+    /* ── list view (accordion: expand in place) ──────────────────────── */
 
     function renderList(cases) {
       if (!cases.length) {
@@ -232,21 +176,89 @@
       cases.forEach(function (c, idx) {
         html +=
           '<div class="sn-card" data-idx="' + idx + '">' +
-            '<p class="sn-card-title">' + esc(c.caseNumber) + " \u2014 " + esc(c.title) + "</p>" +
+            '<p class="sn-card-title" title="' + esc(c.caseNumber + " \u2014 " + c.title) + '">' + esc(c.caseNumber) + " \u2014 " + esc(c.title) + '<span class="sn-chevron">\u25BC</span></p>' +
             '<div class="sn-card-meta">' +
               '<span class="sn-badge sn-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span>" +
               '<span class="sn-badge sn-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span>" +
               "<span>" + esc(formatDate(c.createdDate)) + "</span>" +
             "</div>" +
+            '<div class="sn-card-detail" data-detail="' + idx + '" style="display:none"></div>' +
           "</div>";
       });
       html += "</div>";
       body.innerHTML = html;
 
+      function collapseAll() {
+        body.querySelectorAll(".sn-card-detail").forEach(function (d) { d.style.display = "none"; });
+        body.querySelectorAll(".sn-card").forEach(function (cd) { cd.classList.remove("sn-expanded"); });
+      }
+
       body.querySelectorAll(".sn-card").forEach(function (card) {
-        card.onclick = function () {
+        card.onclick = function (evt) {
+          if (evt.target.closest(".sn-card-detail")) return;
           var idx = parseInt(card.getAttribute("data-idx"), 10);
-          renderDetail(cases[idx]);
+          var c = cases[idx];
+          var detail = card.querySelector(".sn-card-detail");
+          var isOpen = detail.style.display !== "none";
+          collapseAll();
+          if (isOpen) return;
+
+          card.classList.add("sn-expanded");
+          detail.style.display = "";
+          detail.innerHTML =
+            (c.description ? '<div class="sn-detail-row" style="margin-top:8px"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(c.description) + "</div></div>" : "") +
+            '<div class="sn-row" data-actions="' + idx + '">' +
+              '<button type="button" class="sn-btn" data-escalate="' + idx + '">Escalate</button>' +
+              '<button type="button" class="sn-btn sn-btn-sec" data-close="' + idx + '">Close</button>' +
+            "</div>" +
+            '<div data-esc-form="' + idx + '"></div>';
+
+          detail.querySelector("[data-close]").onclick = function (e) {
+            e.stopPropagation();
+            collapseAll();
+          };
+
+          var actions = detail.querySelector("[data-actions]");
+
+          detail.querySelector("[data-escalate]").onclick = function (e) {
+            e.stopPropagation();
+            var formHolder = detail.querySelector("[data-esc-form]");
+            actions.style.display = "none";
+            formHolder.innerHTML =
+              '<div class="sn-form-group" style="margin-top:12px">' +
+                '<label class="sn-label">Reason *</label>' +
+                '<textarea class="sn-textarea" data-esc-reason placeholder="Explain why this case needs escalation"></textarea>' +
+              "</div>" +
+              '<div class="sn-row">' +
+                '<button type="button" class="sn-btn" data-esc-submit>Submit Escalation</button>' +
+                '<button type="button" class="sn-btn sn-btn-sec" data-esc-cancel>Cancel</button>' +
+              "</div>";
+
+            formHolder.querySelector("[data-esc-cancel]").onclick = function (ev) {
+              ev.stopPropagation();
+              formHolder.innerHTML = "";
+              actions.style.display = "";
+            };
+            formHolder.querySelector("[data-esc-submit]").onclick = function (ev) {
+              ev.stopPropagation();
+              var reason = formHolder.querySelector("[data-esc-reason]").value.trim();
+              if (!reason) { showMsg("Reason is required.", "error"); return; }
+              var btn = formHolder.querySelector("[data-esc-submit]");
+              btn.disabled = true;
+              btn.textContent = "Escalating...";
+              clearMsg();
+              apiEscalate(c.sysId, { reason: reason, priority: "1", state: "10" })
+                .then(function () {
+                  showMsg("Case escalated successfully.", "success");
+                  loadMyCases();
+                })
+                .catch(function (err) {
+                  showMsg(err.message || "Escalation failed.", "error");
+                  btn.disabled = false;
+                  btn.textContent = "Submit Escalation";
+                });
+            };
+          };
         };
       });
     }
