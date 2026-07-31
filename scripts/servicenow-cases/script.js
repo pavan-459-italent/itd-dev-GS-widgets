@@ -81,6 +81,15 @@
     });
   }
 
+  function apiGetMine() {
+    var sdk = getSdk();
+    if (!sdk) return Promise.reject(new Error("Connector SDK unavailable"));
+    return sdk.connectors.execute({
+      permalink: "servicenow-my-cases",
+      method: "GET",
+    });
+  }
+
   /* ── styles ──────────────────────────────────────────────────────────── */
 
   function addStyles() {
@@ -124,7 +133,12 @@
       "#" + PANEL_ID + " .sn-detail-row{margin-bottom:8px}" +
       "#" + PANEL_ID + " .sn-detail-label{font-size:0.6875rem;font-weight:600;color:#444458;text-transform:uppercase;margin-bottom:2px}" +
       "#" + PANEL_ID + " .sn-detail-value{color:#1e1e2e;line-height:1.4;font-size:0.8125rem}" +
-      "#" + PANEL_ID + " .sn-detail-desc{background:#fff;padding:10px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);white-space:pre-wrap}";
+      "#" + PANEL_ID + " .sn-detail-desc{background:#fff;padding:10px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);white-space:pre-wrap}" +
+      "#" + PANEL_ID + " .sn-divider{border:none;border-top:1px dashed #7fb8d6;margin:16px 0 12px}" +
+      "#" + PANEL_ID + " .sn-subheader{margin:0 0 8px;font-size:0.75rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#0a5a8a}" +
+      "#" + PANEL_ID + " .sn-mine-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto}" +
+      "#" + PANEL_ID + " .sn-mine-card{padding:10px;border:1px solid #d8ecf4;border-left:3px solid #4FC1E8;border-radius:8px;background:#f7fcfe;font-size:0.8125rem;cursor:pointer}" +
+      "#" + PANEL_ID + " .sn-mine-card:hover{border-color:#0E6FFF}";
     document.head.appendChild(s);
   }
 
@@ -160,11 +174,15 @@
         '</div>' +
       '</div>' +
       '<div id="sn-msg-area"></div>' +
-      '<div id="sn-body"><p class="sn-status">Loading cases&hellip;</p></div>';
+      '<div id="sn-body"><p class="sn-status">Loading cases&hellip;</p></div>' +
+      '<hr class="sn-divider">' +
+      '<p class="sn-subheader">My ServiceNow Cases</p>' +
+      '<div id="sn-mine-body"><p class="sn-status">Loading your cases&hellip;</p></div>';
 
     sidebar.insertBefore(root, sidebar.firstChild);
 
     var body = root.querySelector("#sn-body");
+    var mineBody = root.querySelector("#sn-mine-body");
     var msgArea = root.querySelector("#sn-msg-area");
     var refreshBtn = root.querySelector("#sn-refresh");
     var createBtn = root.querySelector("#sn-create-btn");
@@ -202,6 +220,106 @@
       }
 
       return null;
+    }
+
+    /* ── my other cases (below the topic case) ──────────────────────────── */
+
+    function renderMineList(cases) {
+      if (!cases.length) {
+        mineBody.innerHTML = '<p class="sn-status">You have no other open cases.</p>';
+        return;
+      }
+
+      var html = '<div class="sn-mine-list">';
+      cases.forEach(function (c, idx) {
+        html +=
+          '<div class="sn-mine-card" data-mine-idx="' + idx + '">' +
+            '<p class="sn-card-title">' + esc(c.caseNumber) + " — " + esc(c.title) + "</p>" +
+            '<div class="sn-card-meta">' +
+              '<span class="sn-badge sn-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span>" +
+              '<span class="sn-badge sn-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span>" +
+              "<span>" + esc(formatDate(c.createdDate)) + "</span>" +
+            "</div>" +
+            '<div class="sn-mine-detail" data-mine-detail="' + idx + '" style="display:none"></div>' +
+          "</div>";
+      });
+      html += "</div>";
+      mineBody.innerHTML = html;
+
+      mineBody.querySelectorAll(".sn-mine-card").forEach(function (card) {
+        card.onclick = function (evt) {
+          if (evt.target.closest(".sn-mine-detail")) return;
+          var idx = parseInt(card.getAttribute("data-mine-idx"), 10);
+          var c = cases[idx];
+          var detail = card.querySelector(".sn-mine-detail");
+          var isOpen = detail.style.display !== "none";
+          mineBody.querySelectorAll(".sn-mine-detail").forEach(function (d) { d.style.display = "none"; });
+          if (isOpen) return;
+
+          detail.style.display = "";
+          detail.innerHTML =
+            (c.description ? '<div class="sn-detail-row" style="margin-top:8px"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(c.description) + "</div></div>" : "") +
+            '<div class="sn-row">' +
+              '<button type="button" class="sn-btn" data-mine-escalate="' + idx + '">Escalate</button>' +
+            "</div>" +
+            '<div data-mine-esc-form="' + idx + '"></div>';
+
+          detail.querySelector("[data-mine-escalate]").onclick = function (e) {
+            e.stopPropagation();
+            var formHolder = detail.querySelector("[data-mine-esc-form]");
+            formHolder.innerHTML =
+              '<div class="sn-form-group" style="margin-top:12px">' +
+                '<label class="sn-label">Reason *</label>' +
+                '<textarea class="sn-textarea" data-mine-esc-reason></textarea>' +
+              "</div>" +
+              '<div class="sn-row">' +
+                '<button type="button" class="sn-btn" data-mine-esc-submit>Submit Escalation</button>' +
+                '<button type="button" class="sn-btn sn-btn-sec" data-mine-esc-cancel>Cancel</button>' +
+              "</div>";
+
+            formHolder.querySelector("[data-mine-esc-cancel]").onclick = function (ev) {
+              ev.stopPropagation();
+              formHolder.innerHTML = "";
+            };
+            formHolder.querySelector("[data-mine-esc-submit]").onclick = function (ev) {
+              ev.stopPropagation();
+              var reason = formHolder.querySelector("[data-mine-esc-reason]").value.trim();
+              if (!reason) { showMsg("Reason is required.", "error"); return; }
+              var btn = formHolder.querySelector("[data-mine-esc-submit]");
+              btn.disabled = true;
+              btn.textContent = "Escalating...";
+              clearMsg();
+              apiEscalate(c.sysId, { reason: reason, priority: "1", state: "10" })
+                .then(function () {
+                  showMsg("Case escalated successfully.", "success");
+                  loadMine();
+                })
+                .catch(function (err) {
+                  showMsg(err.message || "Escalation failed.", "error");
+                  btn.disabled = false;
+                  btn.textContent = "Submit Escalation";
+                });
+            };
+          };
+        };
+      });
+    }
+
+    var currentTopicSysId = null;
+
+    function loadMine() {
+      mineBody.innerHTML = '<p class="sn-status">Loading your cases&hellip;</p>';
+      apiGetMine()
+        .then(function (result) {
+          var mine = Array.isArray(result) ? result : result.result || result.data || [];
+          if (currentTopicSysId) {
+            mine = mine.filter(function (c) { return c.sysId !== currentTopicSysId; });
+          }
+          renderMineList(mine);
+        })
+        .catch(function (e) {
+          mineBody.innerHTML = '<p class="sn-status">Failed to load your cases: ' + esc(e.message) + "</p>";
+        });
     }
 
     /* ── detail view ──────────────────────────────────────────────────── */
@@ -249,7 +367,9 @@
             .then(function (result) {
               showMsg("Case escalated successfully.", "success");
               if (result && result.sysId) {
+                currentTopicSysId = result.sysId;
                 renderDetail(result);
+                loadMine();
               } else {
                 setTimeout(loadCases, 1500);
               }
@@ -320,7 +440,9 @@
           .then(function (result) {
             showMsg("Case " + (result.caseNumber || "created") + " created successfully.", "success");
             if (result && result.sysId) {
+              currentTopicSysId = result.sysId;
               renderDetail(result);
+              loadMine();
             } else {
               setTimeout(loadCases, 1500);
             }
@@ -346,16 +468,20 @@
         .then(function (result) {
           var cases = Array.isArray(result) ? result : result.result || result.data || [];
           var topicCase = findTopicCase(cases);
+          currentTopicSysId = topicCase ? topicCase.sysId : null;
 
           if (topicCase) {
             renderDetail(topicCase);
           } else {
             body.innerHTML = '<p class="sn-status">No case exists for this topic yet.</p>';
           }
+          loadMine();
         })
         .catch(function (e) {
           body.innerHTML =
             '<p class="sn-status">Failed to load cases: ' + esc(e.message) + "</p>";
+          currentTopicSysId = null;
+          loadMine();
         })
         .finally(function () {
           refreshBtn.disabled = false;
