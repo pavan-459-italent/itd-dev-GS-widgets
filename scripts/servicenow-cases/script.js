@@ -11,6 +11,12 @@
     return d.innerHTML;
   }
 
+  function stripMentions(v) {
+    // Remove Gainsight user-mention tokens like [gs_user:email@example.com]
+    // so they do not appear as raw text in the rendered description.
+    return String(v || "").replace(/\[gs_user:[^\]]+\]/g, "");
+  }
+
   function isTopicPage() {
     return /^\/[^/]+-\d+\/[^/?#]+/.test(window.location.pathname);
   }
@@ -268,7 +274,7 @@
           card.classList.add("sn-expanded");
           detail.style.display = "";
           detail.innerHTML =
-            (c.description ? '<div class="sn-detail-row" style="margin-top:8px"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(c.description) + "</div></div>" : "") +
+            (c.description ? '<div class="sn-detail-row" style="margin-top:8px"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(stripMentions(c.description)) + "</div></div>" : "") +
             '<div class="sn-row" data-mine-actions="' + idx + '">' +
               '<button type="button" class="sn-btn" data-mine-escalate="' + idx + '">Escalate</button>' +
               '<button type="button" class="sn-btn sn-btn-sec" data-mine-close="' + idx + '">Close</button>' +
@@ -355,7 +361,7 @@
             "<span>" + esc(formatDate(c.createdDate)) + "</span>" +
           "</div>" +
         "</div>" +
-        (c.description ? '<div class="sn-detail-row"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(c.description) + "</div></div>" : "") +
+        (c.description ? '<div class="sn-detail-row"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(stripMentions(c.description)) + "</div></div>" : "") +
         '<div class="sn-row" id="sn-detail-actions">' +
           '<button type="button" class="sn-btn" id="sn-escalate-btn">Escalate</button>' +
           '<button type="button" class="sn-btn sn-btn-sec" id="sn-back-btn">Back</button>' +

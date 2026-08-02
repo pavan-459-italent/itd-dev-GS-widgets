@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Empty State Preview</title>
+<style>
+  body{background:#f0f2f5;font-family:'Inter',system-ui,-apple-system,sans-serif;padding:40px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+  .caption{font-size:13px;color:#555;margin:0 0 8px;font-weight:600}
+  .col{display:flex;flex-direction:column}
+
+  /* ===== shared widget base styles (copied from scripts/servicenow-cases & servicenow-my-cases) ===== */
+  .sn-panel{padding:16px;border-radius:12px;background:#DCF3FA;box-shadow:inset 5px 0 0 0 #4FC1E8,0 1px 3px rgba(0,0,0,0.10),0 1px 2px rgba(0,0,0,0.06);color:#1e1e2e;box-sizing:border-box;max-width:480px;margin:0 0 16px 0}
+  .sn-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
+  .sn-title{margin:0;font-size:0.75rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#444458}
+  .sn-actions{display:flex;align-items:center;gap:8px}
+  .sn-btn{font-family:inherit;font-size:0.75rem;font-weight:600;padding:6px 12px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);cursor:pointer;background:#0E6FFF;color:#fff;border-color:#0E6FFF}
+  .sn-refresh{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;font-size:0.875rem;line-height:1;color:#1e1e2e;background:#fff;border:1px solid rgba(0,0,0,0.12);border-radius:6px;cursor:pointer}
+  .sn-status{font-size:0.75rem;color:#5a5a72;padding:8px 0}
+  .sn-divider{border:none;border-top:1px dashed #7fb8d6;margin:16px 0 12px}
+  .sn-subheader{margin:0 0 8px;font-size:0.75rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#0a5a8a}
+</style>
+</head>
+<body>
+
+  <div class="col">
+    <p class="caption">Topic Page &mdash; "Support Cases" widget (no Related Case, no other cases)</p>
+    <section class="sn-panel">
+      <div class="sn-header">
+        <p class="sn-title">Support Cases</p>
+        <div class="sn-actions">
+          <button type="button" class="sn-refresh" title="Refresh">&#8635;</button>
+          <button type="button" class="sn-btn">Create Case</button>
+        </div>
+      </div>
+      <div></div>
+      <p class="sn-subheader">Related Case</p>
+      <div><p class="sn-status">No case exists for this topic yet.</p></div>
+      <hr class="sn-divider">
+      <p class="sn-subheader">My ServiceNow Cases</p>
+      <div><p class="sn-status">You have no other open cases.</p></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <p class="caption">Non-Topic Page &mdash; "My ServiceNow Cases" widget (no cases at all)</p>
+    <section class="sn-panel">
+      <div class="sn-header">
+        <p class="sn-title">My ServiceNow Cases</p>
+        <div class="sn-actions">
+          <button type="button" class="sn-refresh" title="Refresh">&#8635;</button>
+        </div>
+      </div>
+      <div></div>
+      <div><p class="sn-status">You have not created any ServiceNow cases yet.</p></div>
+    </section>
+  </div>
+
+</body>
+</html>
