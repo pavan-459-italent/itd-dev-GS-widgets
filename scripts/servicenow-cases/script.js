@@ -21,11 +21,6 @@
     return /^\/[^/]+-\d+\/[^/?#]+/.test(window.location.pathname);
   }
 
-  function isAuthError(e) {
-    var msg = String((e && e.message) || "").toLowerCase();
-    return msg.indexOf("authenticat") !== -1;
-  }
-
   function getTopic() {
     var h = document.querySelector("h1");
     return {
@@ -178,9 +173,9 @@
        be shown to logged-in Community users, never anonymous visitors. */
     apiGetMine()
       .then(function () { start(sidebar); })
-      .catch(function (e) {
-        if (isAuthError(e)) return; // anonymous visitor - do not render the panel
-        start(sidebar); // logged in, but the probe failed for another reason
+      .catch(function () {
+        // servicenow-my-cases only fails when the visitor is not authenticated;
+        // treat any failure here as "not logged in" and do not render the panel.
       });
   }
 
