@@ -21,6 +21,11 @@
     return /^\/[^/]+-\d+\/[^/?#]+/.test(window.location.pathname);
   }
 
+  function isAuthError(e) {
+    var msg = String((e && e.message) || "").toLowerCase();
+    return msg.indexOf("authenticat") !== -1;
+  }
+
   function getTopic() {
     var h = document.querySelector("h1");
     return {
@@ -169,6 +174,17 @@
       return;
     }
 
+    /* Probe authentication before rendering anything: this panel must only
+       be shown to logged-in Community users, never anonymous visitors. */
+    apiGetMine()
+      .then(function () { start(sidebar); })
+      .catch(function (e) {
+        if (isAuthError(e)) return; // anonymous visitor - do not render the panel
+        start(sidebar); // logged in, but the probe failed for another reason
+      });
+  }
+
+  function start(sidebar) {
     addStyles();
     var topic = getTopic();
 

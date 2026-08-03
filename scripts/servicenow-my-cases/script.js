@@ -15,6 +15,11 @@
     return /^\/[^/]+-\d+\/[^/?#]+/.test(window.location.pathname);
   }
 
+  function isAuthError(e) {
+    var msg = String((e && e.message) || "").toLowerCase();
+    return msg.indexOf("authenticat") !== -1;
+  }
+
   function findSidebar() {
     var selectors = [".module.Sidebarmodule", ".qa-div-sidebar", "aside", "[class*='sidebar']"];
     for (var i = 0; i < selectors.length; i++) {
@@ -135,6 +140,17 @@
       return;
     }
 
+    /* Probe authentication before rendering anything: this panel must only
+       be shown to logged-in Community users, never anonymous visitors. */
+    apiGetMine()
+      .then(function (result) { start(sidebar, result); })
+      .catch(function (e) {
+        if (isAuthError(e)) return; // anonymous visitor - do not render the panel
+        start(sidebar, null); // logged in, but the probe failed for another reason
+      });
+  }
+
+  function start(sidebar, initialResult) {
     addStyles();
 
     var root = document.createElement("section");
@@ -288,7 +304,12 @@
 
     refreshBtn.onclick = loadMyCases;
 
-    loadMyCases();
+    if (initialResult) {
+      var cases = Array.isArray(initialResult) ? initialResult : initialResult.result || initialResult.data || [];
+      renderList(cases);
+    } else {
+      loadMyCases();
+    }
   }
 
   /* ── bootstrap ───────────────────────────────────────────────────────── */
