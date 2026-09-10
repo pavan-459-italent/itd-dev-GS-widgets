@@ -50,6 +50,45 @@
     });
   }
 
+  /* ── deflection helpers ─────────────────────────────────────────────── */
+
+function isDeflectionAvailable() {
+  return typeof window !== "undefined" && window.ChWebSdk && typeof window.ChWebSdk.Content === "object" && typeof window.ChWebSdk.Content.search === "function";
+}
+
+function getChWebSdk() {
+  if (!isDeflectionAvailable()) return null;
+  return window.ChWebSdk;
+}
+
+function getContentTypeLabel(contentType) {
+  var map = {
+    article: "Knowledge Base Article",
+    question: "Community Question",
+    discussion: "Community Discussion",
+    conversation: "Community Conversation",
+    idea: "Ideation",
+    productUpdate: "Product Update",
+    event: "Event"
+  };
+  return map[contentType] || "Community Content";
+}
+
+function groupResultsBySource(results) {
+  var kb = [];
+  var community = [];
+  var i, r;
+  for (i = 0; i < results.length; i++) {
+    r = results[i];
+    if (String(r.contentType || "").toLowerCase() === "article") {
+      kb.push(r);
+    } else {
+      community.push(r);
+    }
+  }
+  return { kb: kb, community: community };
+}
+
   /* ── API calls via Gainsight Connectors SDK (no middleware) ────────── */
 
   function getSdk() {
@@ -146,6 +185,19 @@
       "#" + PANEL_ID + " .sn-mine-card{padding:10px;border:1px solid #d8ecf4;border-left:3px solid #4FC1E8;border-radius:8px;background:#f7fcfe;font-size:0.8125rem;cursor:pointer}" +
       "#" + PANEL_ID + " .sn-mine-card:hover{border-color:#0E6FFF}" +
       "#" + PANEL_ID + " #sn-back-btn{display:none}" +
+      "#" + PANEL_ID + " .sn-deflect-intro{font-size:0.8125rem;color:#5a5a72;margin-bottom:12px}" +
+      "#" + PANEL_ID + " .sn-deflect-input{width:100%;padding:8px 10px;font-family:inherit;font-size:0.8125rem;border:1px solid rgba(0,0,0,0.12);border-radius:6px;box-sizing:border-box;min-height:60px;resize:vertical;margin-bottom:10px}" +
+      "#" + PANEL_ID + " .sn-deflect-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}" +
+      "#" + PANEL_ID + " .sn-deflect-results{margin-top:12px}" +
+      "#" + PANEL_ID + " .sn-deflect-section{margin-bottom:12px}" +
+      "#" + PANEL_ID + " .sn-deflect-section-title{margin:0 0 6px;font-size:0.6875rem;font-weight:700;text-transform:uppercase;color:#444458}" +
+      "#" + PANEL_ID + " .sn-deflect-item{padding:10px;border:1px solid #d8ecf4;border-left:3px solid #4FC1E8;border-radius:8px;background:#f7fcfe;font-size:0.8125rem;margin-bottom:8px;cursor:pointer}" +
+      "#" + PANEL_ID + " .sn-deflect-item:hover{border-color:#0E6FFF}" +
+      "#" + PANEL_ID + " .sn-deflect-item-title{font-weight:600;color:#1e1e2e;margin:0 0 4px}" +
+      "#" + PANEL_ID + " .sn-deflect-item-excerpt{color:#5a5a72;font-size:0.75rem;line-height:1.4;margin:0 0 6px}" +
+      "#" + PANEL_ID + " .sn-deflect-item-meta{font-size:0.6875rem;color:#8a8aa3}" +
+      "#" + PANEL_ID + " .sn-deflect-empty{font-size:0.8125rem;color:#5a5a72;padding:8px 0}" +
+      "#" + PANEL_ID + " .sn-deflect-solved{margin-top:12px;padding:10px;border-radius:6px;background:#e6f9ed;color:#1f7a3d;font-size:0.8125rem}" +
       "#" + PANEL_ID + " .sn-chevron{display:inline-block;margin-left:6px;font-size:0.7em;color:#5a5a72;transition:transform 0.15s ease}" +
       "#" + PANEL_ID + " .sn-mine-card.sn-expanded .sn-chevron{transform:rotate(180deg)}";
     document.head.appendChild(s);
@@ -426,6 +478,142 @@
       };
     }
 
+        /* ── deflection view ──────────────────────────────────────────────── */
+
+    function renderDeflection() {
+      createBtn.style.display = "none";
+      body.innerHTML =
+        '<p class="sn-title" style="margin-bottom:8px">Find a Solution</p>' +
+        '<p class="sn-deflect-intro">Describe your issue below and we\'ll search our Community and Knowledge Base for relevant articles before creating a ServiceNow case.</p>' +
+        '<div class="sn-form-group">' +
+          '<label class="sn-label">What do you need help with? *</label>' +
+          '<textarea class="sn-deflect-input" id="sn-d-query" placeholder="e.g. \'How do I reset my password?\'"></textarea>' +
+        "</div>" +
+        '<div class="sn-deflect-actions">' +
+          '<button type="button" class="sn-btn" id="sn-d-search">Search for Solutions</button>' +
+          '<button type="button" class="sn-btn sn-btn-sec" id="sn-d-skip">Skip & Create Case</button>' +
+        "</div>" +
+        '<div id="sn-d-results"></div>';
+
+      var queryInput = root.querySelector("#sn-d-query");
+      var resultsArea = root.querySelector("#sn-d-results");
+
+      root.querySelector("#sn-d-skip").onclick = renderCreate;
+
+      function showSearching() {
+        resultsArea.innerHTML = '<p class="sn-status">Searching Community and Knowledge Base...</p>';
+      }
+
+      function showResults(results) {
+        if (!results || !results.length) {
+          resultsArea.innerHTML =
+            '<p class="sn-deflect-empty">No relevant results found. You can still create a ServiceNow case.</p>' +
+            '<div class="sn-row">' +
+              '<button type="button" class="sn-btn" id="sn-d-create-anyway">Create Case</button>' +
+            "</div>";
+          root.querySelector("#sn-d-create-anyway").onclick = renderCreate;
+          return;
+        }
+
+        var grouped = groupResultsBySource(results);
+        var html = "";
+        var sectionHtml = "";
+
+        if (grouped.kb.length) {
+          sectionHtml = '<div class="sn-deflect-section">' +
+            '<p class="sn-deflect-section-title">Knowledge Base Articles</p>';
+          sectionHtml += renderResultItems(grouped.kb);
+          sectionHtml += "</div>";
+          html += sectionHtml;
+        }
+
+        if (grouped.community.length) {
+          sectionHtml = '<div class="sn-deflect-section">' +
+            '<p class="sn-deflect-section-title">Community Content</p>';
+          sectionHtml += renderResultItems(grouped.community);
+          sectionHtml += "</div>";
+          html += sectionHtml;
+        }
+
+        html += '<div class="sn-deflect-actions" style="margin-top:12px">' +
+          '<button type="button" class="sn-btn sn-btn-sec" id="sn-d-still-need-help">I still need help — Create Case</button>' +
+        "</div>";
+
+        resultsArea.innerHTML = html;
+
+        // Wire up "still need help"
+        root.querySelector("#sn-d-still-need-help").onclick = renderCreate;
+
+        // Wire up each result link to open in new tab
+        resultsArea.querySelectorAll(".sn-deflect-item").forEach(function (item) {
+          item.onclick = function (evt) {
+            if (evt.target.closest("a")) return;
+            var url = item.getAttribute("data-url");
+            if (url) window.open(url, "_blank");
+          };
+        });
+      }
+
+      function renderResultItems(items) {
+        var i, r, html = "";
+        for (i = 0; i < items.length; i++) {
+          r = items[i];
+          html +=
+            '<div class="sn-deflect-item" data-url="' + esc(r.url || "") + '">' +
+              '<p class="sn-deflect-item-title">' + esc(r.title || "Untitled") + "</p>" +
+              '<p class="sn-deflect-item-excerpt">' + esc(r.excerpt || "") + "</p>" +
+              '<p class="sn-deflect-item-meta">' + esc(getContentTypeLabel(r.contentType)) +
+                (r.numberOfViews !== undefined ? " · " + r.numberOfViews + " views" : "") +
+              "</p>" +
+            "</div>";
+        }
+        return html;
+      }
+
+      function recordDeflection(query, resultCount) {
+        // Optional: send deflection telemetry to an analytics endpoint or connector.
+        // For now, log to console. Replace with your telemetry call if needed.
+        if (window.console && window.console.log) {
+          console.log("[ServiceNow Deflection] query='" + query + "' results=" + resultCount);
+        }
+      }
+
+      root.querySelector("#sn-d-search").onclick = function () {
+        var query = queryInput.value.trim();
+        if (!query) {
+          showMsg("Please describe your issue before searching.", "error");
+          return;
+        }
+
+        var sdk = getChWebSdk();
+        if (!sdk) {
+          // ChWebSdk not available — fall back to create form
+          renderCreate();
+          return;
+        }
+
+        showSearching();
+        clearMsg();
+
+        sdk.Content.search(query, { limit: 10, page: 0, fetchMetadata: true })
+          .then(function (results) {
+            var list = Array.isArray(results) ? results : [];
+            recordDeflection(query, list.length);
+            showResults(list);
+          })
+          .catch(function (err) {
+            resultsArea.innerHTML =
+              '<p class="sn-deflect-empty">Search failed. You can still create a ServiceNow case.</p>' +
+              '<div class="sn-row">' +
+                '<button type="button" class="sn-btn" id="sn-d-create-on-error">Create Case</button>' +
+              "</div>";
+            root.querySelector("#sn-d-create-on-error").onclick = renderCreate;
+          });
+      };
+
+      queryInput.focus();
+    }
+
     /* ── create view ──────────────────────────────────────────────────── */
 
     function renderCreate() {
@@ -533,7 +721,14 @@
     }
 
     refreshBtn.onclick = loadCases;
-    createBtn.onclick = renderCreate;
+    // createBtn.onclick = renderCreate;
+    createBtn.onclick = function () {
+      if (isDeflectionAvailable()) {
+        renderDeflection();
+      } else {
+        renderCreate();
+      }
+};
 
     loadCases();
   }
