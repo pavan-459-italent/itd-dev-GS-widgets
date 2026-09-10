@@ -89,6 +89,12 @@ function groupResultsBySource(results) {
   return { kb: kb, community: community };
 }
 
+function resetToInitialState() {
+  createBtn.style.display = "block";
+  body.innerHTML = "";
+  loadCases();
+}
+
   /* ── API calls via Gainsight Connectors SDK (no middleware) ────────── */
 
   function getSdk() {
@@ -536,13 +542,26 @@ function groupResultsBySource(results) {
         }
 
         html += '<div class="sn-deflect-actions" style="margin-top:12px">' +
-          '<button type="button" class="sn-btn sn-btn-sec" id="sn-d-still-need-help">I still need help — Create Case</button>' +
+          '<button type="button" class="sn-btn sn-btn-sec" id="sn-d-solved">This solved my issue</button>' +
+          '<button type="button" class="sn-btn" id="sn-d-still-need-help">I still need help — Create Case</button>' +
         "</div>";
 
         resultsArea.innerHTML = html;
 
         // Wire up "still need help"
         root.querySelector("#sn-d-still-need-help").onclick = renderCreate;
+
+        // Wire up "solved"
+        root.querySelector("#sn-d-solved").onclick = function () {
+          recordDeflection(query, list.length, true);
+          body.innerHTML =
+            '<p class="sn-title" style="margin-bottom:8px">Great!</p>' +
+            '<p class="sn-deflect-solved">We\'re glad the suggested content helped. No ServiceNow case will be created.</p>' +
+            '<div class="sn-row" style="margin-top:12px">' +
+              '<button type="button" class="sn-btn sn-btn-sec" id="sn-d-reset">Back to Topic</button>' +
+            "</div>";
+          root.querySelector("#sn-d-reset").onclick = resetToInitialState;
+        };
 
         // Wire up each result link to open in new tab
         resultsArea.querySelectorAll(".sn-deflect-item").forEach(function (item) {
@@ -570,11 +589,11 @@ function groupResultsBySource(results) {
         return html;
       }
 
-      function recordDeflection(query, resultCount) {
+      function recordDeflection(query, resultCount, solved) {
         // Optional: send deflection telemetry to an analytics endpoint or connector.
         // For now, log to console. Replace with your telemetry call if needed.
         if (window.console && window.console.log) {
-          console.log("[ServiceNow Deflection] query='" + query + "' results=" + resultCount);
+          console.log("[ServiceNow Deflection] query='" + query + "' results=" + resultCount + " solved=" + solved);
         }
       }
 
@@ -598,7 +617,7 @@ function groupResultsBySource(results) {
         sdk.Content.search(query, { limit: 10, page: 0, fetchMetadata: true })
           .then(function (results) {
             var list = Array.isArray(results) ? results : [];
-            recordDeflection(query, list.length);
+            recordDeflection(query, list.length, false);
             showResults(list);
           })
           .catch(function (err) {
