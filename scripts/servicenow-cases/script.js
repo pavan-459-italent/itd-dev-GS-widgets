@@ -466,10 +466,10 @@ function resetToInitialState() {
           '<button type="button" class="sn-btn sn-btn-sec" id="sn-back-btn">Back</button>' +
         "</div>" +
         '<div id="sn-escalate-form"></div>' +
-        '<div class="sn-comments" id="sn-comments-section" style="display:none">' +
+        '<div class="sn-comments" id="sn-comments-section">' +
           '<p class="sn-comments-title">Comments</p>' +
           '<div id="sn-comments-list"><p class="sn-status">Loading comments...</p></div>' +
-          '<div class="sn-comment-composer" style="display:none" id="sn-comment-composer">' +
+          '<div class="sn-comment-composer" style="display:none" id="sn-comment-composer">'
             '<label class="sn-label">Add a comment</label>' +
             '<textarea class="sn-comment-input" id="sn-comment-text" placeholder="Enter your comment..."></textarea>' +
             '<div class="sn-row">' +
