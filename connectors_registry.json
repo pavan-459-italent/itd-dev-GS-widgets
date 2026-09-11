@@ -221,6 +221,84 @@
         }
       ],
       "response_content_type": "application/json"
+    },
+    {
+      "name": "ServiceNow Case Add Comment",
+      "permalink": "servicenow-case-add-comment",
+      "url": "https://dev438610.service-now.com/api/now/table/sn_customerservice_case/{{ pathParams.sys_id }}",
+      "method": "PATCH",
+      "authentication": {
+        "type": "api_key",
+        "config": {
+          "key": "Authorization",
+          "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
+          "in": "header"
+        }
+      },
+      "headers": [
+        {
+          "key": "Accept",
+          "value": "application/json",
+          "overridable": false
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "overridable": false
+        }
+      ],
+      "path_parameters": [
+        {
+          "key": "sys_id"
+        }
+      ],
+      "request_body": "{% set data = body_text | from_json %}\n{{ {'comments': data.get('comment', '')} | tojson }}",
+      "response_content_type": "application/json"
+    },
+    {
+      "name": "ServiceNow Case Activities",
+      "permalink": "servicenow-case-activities",
+      "url": "https://dev438610.service-now.com/api/now/table/sys_journal_field",
+      "method": "GET",
+      "authentication": {
+        "type": "api_key",
+        "config": {
+          "key": "Authorization",
+          "value": "Basic {{ get_secret('servicenow_basic_auth_token') }}",
+          "in": "header"
+        }
+      },
+      "headers": [
+        {
+          "key": "Accept",
+          "value": "application/json",
+          "overridable": false
+        }
+      ],
+      "query_parameters": [
+        {
+          "key": "sysparm_query",
+          "value": "element_id={{ queryParams.sys_id }}",
+          "overridable": true
+        },
+        {
+          "key": "sysparm_fields",
+          "value": "sys_id,value,sys_created_on,sys_created_by,element",
+          "overridable": false
+        },
+        {
+          "key": "sysparm_limit",
+          "value": "50",
+          "overridable": false
+        },
+        {
+          "key": "sysparm_exclude_reference_link",
+          "value": "true",
+          "overridable": false
+        }
+      ],
+      "response_body": "{% set data = response.body | from_json %}\n{% set ns = namespace(out=[]) %}\n{% for item in data['result'] %}\n{% if (item['element'] | default('')) == 'comments' %}\n{% set ns.out = ns.out + [{\"sysId\": item['sys_id'], \"comment\": item['value'] | default(''), \"createdOn\": item['sys_created_on'], \"createdBy\": item['sys_created_by'] | default('System')}] %}\n{% endif %}\n{% endfor %}\n{% set ns.out = ns.out | sort(attribute='createdOn', reverse=true) %}\n{{ ns.out | json_encode }}",
+      "response_content_type": "application/json"
     }
   ],
   "composite_connectors": [

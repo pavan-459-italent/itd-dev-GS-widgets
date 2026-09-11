@@ -141,6 +141,27 @@ function resetToInitialState() {
     });
   }
 
+  function apiAddComment(sysId, comment) {
+    var sdk = getSdk();
+    if (!sdk) return Promise.reject(new Error("Connector SDK unavailable"));
+    return sdk.connectors.execute({
+      permalink: "servicenow-case-add-comment",
+      method: "PATCH",
+      pathParams: { sys_id: sysId },
+      payload: { comment: comment },
+    });
+  }
+
+  function apiGetActivities(sysId) {
+    var sdk = getSdk();
+    if (!sdk) return Promise.reject(new Error("Connector SDK unavailable"));
+    return sdk.connectors.execute({
+      permalink: "servicenow-case-activities",
+      method: "GET",
+      queryParams: { sys_id: sysId },
+    });
+  }
+
   /* ── styles ──────────────────────────────────────────────────────────── */
 
   function addStyles() {
@@ -204,6 +225,14 @@ function resetToInitialState() {
       "#" + PANEL_ID + " .sn-deflect-item-meta{font-size:0.6875rem;color:#8a8aa3}" +
       "#" + PANEL_ID + " .sn-deflect-empty{font-size:0.8125rem;color:#5a5a72;padding:8px 0}" +
       "#" + PANEL_ID + " .sn-deflect-solved{margin-top:12px;padding:10px;border-radius:6px;background:#e6f9ed;color:#1f7a3d;font-size:0.8125rem}" +
+      "#" + PANEL_ID + " .sn-comments{margin-top:12px}" +
+      "#" + PANEL_ID + " .sn-comments-title{margin:0 0 8px;font-size:0.6875rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#444458}" +
+      "#" + PANEL_ID + " .sn-comment-item{padding:10px;border:1px solid rgba(0,0,0,0.08);border-radius:8px;background:#fff;font-size:0.8125rem;margin-bottom:8px}" +
+      "#" + PANEL_ID + " .sn-comment-text{margin:0 0 6px;color:#1e1e2e;white-space:pre-wrap;word-break:break-word}" +
+      "#" + PANEL_ID + " .sn-comment-meta{font-size:0.6875rem;color:#8a8aa3}" +
+      "#" + PANEL_ID + " .sn-comment-empty{font-size:0.8125rem;color:#5a5a72;padding:8px 0}" +
+      "#" + PANEL_ID + " .sn-comment-composer{margin-top:12px}" +
+      "#" + PANEL_ID + " .sn-comment-input{width:100%;padding:8px 10px;font-family:inherit;font-size:0.8125rem;border:1px solid rgba(0,0,0,0.12);border-radius:6px;box-sizing:border-box;min-height:70px;resize:vertical;margin-bottom:8px}" +
       "#" + PANEL_ID + " .sn-chevron{display:inline-block;margin-left:6px;font-size:0.7em;color:#5a5a72;transition:transform 0.15s ease}" +
       "#" + PANEL_ID + " .sn-mine-card.sn-expanded .sn-chevron{transform:rotate(180deg)}";
     document.head.appendChild(s);
@@ -433,9 +462,22 @@ function resetToInitialState() {
         (c.description ? '<div class="sn-detail-row"><div class="sn-detail-label">Description</div><div class="sn-detail-value sn-detail-desc">' + esc(stripMentions(c.description)) + "</div></div>" : "") +
         '<div class="sn-row" id="sn-detail-actions">' +
           '<button type="button" class="sn-btn" id="sn-escalate-btn">Escalate</button>' +
+          '<button type="button" class="sn-btn sn-btn-sec" id="sn-comment-btn">Add Comment</button>' +
           '<button type="button" class="sn-btn sn-btn-sec" id="sn-back-btn">Back</button>' +
         "</div>" +
-        '<div id="sn-escalate-form"></div>';
+        '<div id="sn-escalate-form"></div>' +
+        '<div class="sn-comments" id="sn-comments-section" style="display:none">' +
+          '<p class="sn-comments-title">Comments</p>' +
+          '<div id="sn-comments-list"><p class="sn-status">Loading comments...</p></div>' +
+          '<div class="sn-comment-composer" style="display:none" id="sn-comment-composer">' +
+            '<label class="sn-label">Add a comment</label>' +
+            '<textarea class="sn-comment-input" id="sn-comment-text" placeholder="Enter your comment..."></textarea>' +
+            '<div class="sn-row">' +
+              '<button type="button" class="sn-btn" id="sn-comment-submit">Submit Comment</button>' +
+              '<button type="button" class="sn-btn sn-btn-sec" id="sn-comment-cancel">Cancel</button>' +
+            "</div>" +
+          "</div>" +
+        "</div>";
 
       var detailActions = root.querySelector("#sn-detail-actions");
 
@@ -482,6 +524,74 @@ function resetToInitialState() {
             });
         };
       };
+
+      // Comments
+      root.querySelector("#sn-comment-btn").onclick = function () {
+        var section = root.querySelector("#sn-comments-section");
+        var composer = root.querySelector("#sn-comment-composer");
+        section.style.display = "block";
+        composer.style.display = "block";
+        root.querySelector("#sn-comment-text").focus();
+      };
+
+      root.querySelector("#sn-comment-cancel").onclick = function () {
+        root.querySelector("#sn-comment-text").value = "";
+        root.querySelector("#sn-comment-composer").style.display = "none";
+      };
+
+      root.querySelector("#sn-comment-submit").onclick = function () {
+        var text = root.querySelector("#sn-comment-text").value.trim();
+        if (!text) { showMsg("Comment is required.", "error"); return; }
+        var btn = root.querySelector("#sn-comment-submit");
+        btn.disabled = true;
+        btn.textContent = "Submitting...";
+        clearMsg();
+        apiAddComment(c.sysId, text)
+          .then(function () {
+            showMsg("Comment added successfully.", "success");
+            root.querySelector("#sn-comment-text").value = "";
+            root.querySelector("#sn-comment-composer").style.display = "none";
+            loadComments(c.sysId);
+          })
+          .catch(function (e) {
+            showMsg(e.message || "Failed to add comment.", "error");
+            btn.disabled = false;
+            btn.textContent = "Submit Comment";
+          });
+      };
+
+      function loadComments(sysId) {
+        var list = root.querySelector("#sn-comments-list");
+        list.innerHTML = '<p class="sn-status">Loading comments...</p>';
+        apiGetActivities(sysId)
+          .then(function (comments) {
+            renderComments(comments);
+          })
+          .catch(function (e) {
+            list.innerHTML = '<p class="sn-comment-empty">Could not load comments: ' + esc(e.message) + "</p>";
+          });
+      }
+
+      function renderComments(comments) {
+        var list = root.querySelector("#sn-comments-list");
+        if (!comments || !comments.length) {
+          list.innerHTML = '<p class="sn-comment-empty">No comments yet.</p>';
+          return;
+        }
+        var html = "";
+        var i, cm;
+        for (i = 0; i < comments.length; i++) {
+          cm = comments[i];
+          html +=
+            '<div class="sn-comment-item">' +
+              '<p class="sn-comment-text">' + esc(cm.comment) + "</p>" +
+              '<p class="sn-comment-meta">' + esc(cm.createdBy || "System") + " · " + esc(formatDate(cm.createdOn)) + "</p>" +
+            "</div>";
+        }
+        list.innerHTML = html;
+      }
+
+      loadComments(c.sysId);
     }
 
         /* ── deflection view ──────────────────────────────────────────────── */
