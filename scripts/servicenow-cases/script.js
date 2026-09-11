@@ -158,7 +158,7 @@ function resetToInitialState() {
     return sdk.connectors.execute({
       permalink: "servicenow-case-activities",
       method: "GET",
-      queryParams: { sys_id: sysId },
+      pathParams: { sys_id: sysId },
     });
   }
 
