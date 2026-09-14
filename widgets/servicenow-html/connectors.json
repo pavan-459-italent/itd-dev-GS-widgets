@@ -237,7 +237,7 @@
     {
       "name": "ServiceNow Case Activities",
       "permalink": "servicenow-case-activities",
-      "url": "https://dev438610.service-now.com/api/now/table/sys_journal_field?sysparm_query=element_id={{ pathParams.sys_id }}",
+      "url": "https://dev438610.service-now.com/api/now/table/sys_journal_field",
       "method": "GET",
       "authentication": {
         "type": "api_key",
@@ -254,12 +254,12 @@
           "overridable": false
         }
       ],
-      "path_parameters": [
-        {
-          "key": "sys_id"
-        }
-      ],
       "query_parameters": [
+        {
+          "key": "sysparm_query",
+          "value": "element_id=",
+          "overridable": true
+        },
         {
           "key": "sysparm_fields",
           "value": "sys_id,value,sys_created_on,sys_created_by,element",
