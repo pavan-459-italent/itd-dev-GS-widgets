@@ -232,6 +232,7 @@ function resetToInitialState() {
       "#" + PANEL_ID + " .sn-comment-meta{font-size:0.6875rem;color:#8a8aa3}" +
       "#" + PANEL_ID + " .sn-comment-empty{font-size:0.8125rem;color:#5a5a72;padding:8px 0}" +
       "#" + PANEL_ID + " .sn-comment-composer{margin-top:12px}" +
+      "#" + PANEL_ID + " #sn-comments-list{max-height:220px;overflow-y:auto;padding-right:4px}" +
       "#" + PANEL_ID + " .sn-comment-input{width:100%;padding:8px 10px;font-family:inherit;font-size:0.8125rem;border:1px solid rgba(0,0,0,0.12);border-radius:6px;box-sizing:border-box;min-height:70px;resize:vertical;margin-bottom:8px}" +
       "#" + PANEL_ID + " .sn-chevron{display:inline-block;margin-left:6px;font-size:0.7em;color:#5a5a72;transition:transform 0.15s ease}" +
       "#" + PANEL_ID + " .sn-mine-card.sn-expanded .sn-chevron{transform:rotate(180deg)}";
