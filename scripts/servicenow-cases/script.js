@@ -730,7 +730,11 @@ function resetToInitialState() {
             var list = Array.isArray(results) ? results : [];
             var currentPath = window.location.pathname.replace(/\/+$/, "");
             list = list.filter(function (r) {
-              var u = (r.url || "").replace(/^https?:\/\/[^\/]+/, "").replace(/\/+$/, "");
+              var u = (r.url || "")
+                .replace(/^https?:\/\/[^\/]+/, "")
+                .replace(/\?.*$/, "")
+                .replace(/#.*$/, "")
+                .replace(/\/+$/, "");
               return u !== currentPath;
             });
             recordDeflection(query, list.length, false);
