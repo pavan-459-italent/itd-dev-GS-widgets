@@ -728,14 +728,14 @@ function resetToInitialState() {
         sdk.Content.search(query, { limit: 10, page: 0, fetchMetadata: true })
           .then(function (results) {
             var list = Array.isArray(results) ? results : [];
-            var currentPath = window.location.pathname.replace(/\/+$/, "");
+            var currentTid = "";
+            var m = window.location.pathname.match(/-(\d+)\/?$/);
+            if (m) currentTid = m[1];
+
             list = list.filter(function (r) {
-              var u = (r.url || "")
-                .replace(/^https?:\/\/[^\/]+/, "")
-                .replace(/\?.*$/, "")
-                .replace(/#.*$/, "")
-                .replace(/\/+$/, "");
-              return u !== currentPath;
+              var rm = (r.url || "").match(/[?&]tid=(\d+)/);
+              var resultTid = rm ? rm[1] : "";
+              return resultTid !== currentTid;
             });
             recordDeflection(query, list.length, false);
             showResults(list);
