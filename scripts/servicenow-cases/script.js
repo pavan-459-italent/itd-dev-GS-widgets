@@ -728,6 +728,11 @@ function resetToInitialState() {
         sdk.Content.search(query, { limit: 10, page: 0, fetchMetadata: true })
           .then(function (results) {
             var list = Array.isArray(results) ? results : [];
+            var currentPath = window.location.pathname.replace(/\/+$/, "");
+            list = list.filter(function (r) {
+              var u = (r.url || "").replace(/^https?:\/\/[^\/]+/, "").replace(/\/+$/, "");
+              return u !== currentPath;
+            });
             recordDeflection(query, list.length, false);
             showResults(list);
           })
