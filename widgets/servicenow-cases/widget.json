@@ -1,0 +1,12 @@
+{
+  "title": "ServiceNow Case Connectors",
+  "description": "Connector container for the ServiceNow case integration. Not intended for placement in the community.",
+  "category": "Internal",
+  "containers": [
+    "Sidebar"
+  ],
+  "source": {
+    "path": "dist",
+    "entry": "content.html"
+  }
+}
