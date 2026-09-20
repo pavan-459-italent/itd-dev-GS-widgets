@@ -1,0 +1,177 @@
+<div class="cp-portal" id="cp-root">
+  <div class="cp-header">
+    <div>
+      <h1 class="cp-title">Case Portal</h1>
+      <p class="cp-subtitle">View, create, and manage your ServiceNow support cases.</p>
+    </div>
+    <div class="cp-actions">
+      <button type="button" class="cp-btn cp-btn-icon" id="cp-refresh" title="Refresh">&#8635;</button>
+      <button type="button" class="cp-btn cp-btn-primary" id="cp-new-case">New Case</button>
+    </div>
+  </div>
+
+  <div id="cp-msg-area"></div>
+
+  <div class="cp-layout">
+    <div class="cp-list-pane">
+      <p class="cp-pane-title">My Cases</p>
+      <div id="cp-list-body"><p class="cp-status">Loading your cases&hellip;</p></div>
+    </div>
+    <div class="cp-detail-pane" id="cp-detail-pane">
+      <p class="cp-placeholder">Select a case from the list, or create a new one, to see details here.</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  #cp-root {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--color-text-primary, #1e1e2e);
+    box-sizing: border-box;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  #cp-root * { box-sizing: border-box; }
+
+  .cp-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .cp-title { margin: 0 0 4px; font-size: 1.375rem; font-weight: 700; color: var(--color-text-primary, #1e1e2e); }
+  .cp-subtitle { margin: 0; font-size: 0.875rem; color: var(--color-text-secondary, #5a5a72); }
+
+  .cp-actions { display: flex; align-items: center; gap: 8px; }
+  .cp-btn {
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    background: #fff;
+    color: #1e1e2e;
+  }
+  .cp-btn:hover:not(:disabled) { background: #f2f6fb; }
+  .cp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .cp-btn-primary {
+    background: var(--color-action-primary-default, #0E6FFF);
+    color: #fff;
+    border-color: var(--color-action-primary-default, #0E6FFF);
+  }
+  .cp-btn-primary:hover:not(:disabled) { background: var(--color-action-primary-hover, #094db5); }
+  .cp-btn-sec { background: #fff; color: #1e1e2e; }
+  .cp-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  .cp-spin { animation: cp-spin 0.6s linear infinite; }
+  @keyframes cp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .cp-msg { padding: 10px 14px; border-radius: 6px; font-size: 0.8125rem; margin-bottom: 16px; }
+  .cp-msg-ok { background: #e6f9ed; color: #1f7a3d; }
+  .cp-msg-err { background: #fdecec; color: #9e2b2b; }
+
+  .cp-layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .cp-layout { grid-template-columns: 1fr; } }
+
+  .cp-pane-title {
+    margin: 0 0 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary, #444458);
+  }
+
+  .cp-status { font-size: 0.8125rem; color: #5a5a72; padding: 8px 0; }
+  .cp-placeholder { font-size: 0.875rem; color: #5a5a72; padding: 24px; text-align: center; }
+
+  .cp-list { display: flex; flex-direction: column; gap: 8px; max-height: 640px; overflow-y: auto; padding-right: 4px; }
+  .cp-card {
+    padding: 12px;
+    border: 1px solid #d8e3ee;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.8125rem;
+    cursor: pointer;
+  }
+  .cp-card:hover { border-color: #0E6FFF; }
+  .cp-card.cp-active { border-color: #0E6FFF; box-shadow: 0 0 0 1px #0E6FFF; }
+  .cp-card-title {
+    font-weight: 600;
+    margin: 0 0 6px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cp-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.6875rem; color: #5a5a72; }
+
+  .cp-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: #fff;
+    background: #8a8aa3;
+    text-transform: uppercase;
+  }
+  .cp-badge-critical, .cp-badge-high { background: #d9455f; }
+  .cp-badge-moderate { background: #d68a1f; }
+  .cp-badge-low { background: #3aa06a; }
+  .cp-badge-new, .cp-badge-open, .cp-badge-in-progress { background: #0E6FFF; }
+  .cp-badge-closed, .cp-badge-resolved, .cp-badge-cancelled { background: #6b7280; }
+  .cp-badge-awaiting-info { background: #d68a1f; }
+
+  .cp-detail-pane {
+    border: 1px solid #d8e3ee;
+    border-radius: 10px;
+    background: #fff;
+    padding: 20px;
+    min-height: 300px;
+  }
+  .cp-detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .cp-detail-case-title { margin: 0 0 6px; font-size: 1.0625rem; font-weight: 700; }
+  .cp-detail-row { margin-bottom: 14px; }
+  .cp-detail-label { font-size: 0.6875rem; font-weight: 600; color: #444458; text-transform: uppercase; margin-bottom: 4px; }
+  .cp-detail-value { color: #1e1e2e; line-height: 1.5; font-size: 0.8125rem; }
+  .cp-detail-desc { background: #f7fafd; padding: 12px; border-radius: 6px; border: 1px solid rgba(0, 0, 0, 0.08); white-space: pre-wrap; }
+  .cp-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+  .cp-form-group { margin-bottom: 14px; }
+  .cp-label { display: block; font-size: 0.75rem; font-weight: 600; color: #444458; margin-bottom: 4px; }
+  .cp-input, .cp-textarea, .cp-select {
+    width: 100%;
+    padding: 9px 11px;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+  }
+  .cp-textarea { min-height: 90px; resize: vertical; }
+
+  .cp-divider { border: none; border-top: 1px solid rgba(0, 0, 0, 0.08); margin: 18px 0; }
+
+  .cp-comments-title { margin: 0 0 10px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #444458; }
+  .cp-comment-item { padding: 10px 12px; border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 8px; background: #f7fafd; font-size: 0.8125rem; margin-bottom: 8px; }
+  .cp-comment-text { margin: 0 0 6px; white-space: pre-wrap; word-break: break-word; }
+  .cp-comment-meta { font-size: 0.6875rem; color: #8a8aa3; }
+  .cp-comment-empty { font-size: 0.8125rem; color: #5a5a72; padding: 6px 0; }
+  .cp-comment-input { width: 100%; padding: 9px 11px; font-family: inherit; font-size: 0.8125rem; border: 1px solid rgba(0, 0, 0, 0.15); border-radius: 6px; min-height: 70px; resize: vertical; margin-bottom: 8px; }
+</style>
+
+<script type="module" src="app.js"></script>

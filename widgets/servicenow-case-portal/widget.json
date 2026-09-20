@@ -1,0 +1,10 @@
+{
+  "title": "ServiceNow Case Portal",
+  "type": "servicenow-case-portal",
+  "description": "Full case portal for a custom page: view your ServiceNow cases, create new cases, escalate, and add comments. Reuses the existing ServiceNow connectors (servicenow-my-cases, servicenow-case-create, servicenow-case-escalate, servicenow-case-add-comment, servicenow-case-activities).",
+  "category": "Support",
+  "source": {
+    "path": "dist",
+    "entry": "content.html"
+  }
+}
