@@ -15,6 +15,33 @@
   <div class="cp-layout">
     <div class="cp-list-pane">
       <p class="cp-pane-title">My Cases</p>
+      <div class="cp-filters">
+        <input type="text" class="cp-input cp-filter-search" id="cp-f-search" placeholder="Search case #, title, description">
+        <div class="cp-filter-row">
+          <select class="cp-select cp-filter-select" id="cp-f-status">
+            <option value="">All statuses</option>
+            <option value="New">New</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Awaiting Info">Awaiting Info</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Closed">Closed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <select class="cp-select cp-filter-select" id="cp-f-priority">
+            <option value="">All priorities</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Moderate">Moderate</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <button type="button" class="cp-btn cp-btn-sec cp-filter-clear" id="cp-f-clear">Clear filters</button>
+        <div class="cp-filter-future" title="Filtering by a specific requester or by organization email domain needs case data beyond your own account and is planned for a later update.">
+          <span class="cp-filter-future-label">Filter by requester / org domain</span>
+          <span class="cp-filter-future-badge">Coming soon</span>
+        </div>
+      </div>
+      <p class="cp-filter-count" id="cp-f-count"></p>
       <div id="cp-list-body"><p class="cp-status">Loading your cases&hellip;</p></div>
     </div>
     <div class="cp-detail-pane" id="cp-detail-pane">
@@ -96,6 +123,37 @@
 
   .cp-status { font-size: 0.8125rem; color: #5a5a72; padding: 8px 0; }
   .cp-placeholder { font-size: 0.875rem; color: #5a5a72; padding: 24px; text-align: center; }
+
+  .cp-filters { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+  .cp-filter-search { font-size: 0.8125rem; }
+  .cp-filter-row { display: flex; gap: 8px; }
+  .cp-filter-select { flex: 1; font-size: 0.75rem; padding: 7px 9px; }
+  .cp-filter-clear { align-self: flex-start; padding: 5px 10px; font-size: 0.6875rem; }
+  .cp-filter-future {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px dashed #d8e3ee;
+    border-radius: 6px;
+    background: #f7fafd;
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  .cp-filter-future-label { font-size: 0.6875rem; color: #5a5a72; }
+  .cp-filter-future-badge {
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #5a5a72;
+    background: #e5eaf1;
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .cp-filter-count { font-size: 0.6875rem; color: #8a8aa3; margin: 2px 0 8px; }
 
   .cp-list { display: flex; flex-direction: column; gap: 8px; max-height: 640px; overflow-y: auto; padding-right: 4px; }
   .cp-card {
