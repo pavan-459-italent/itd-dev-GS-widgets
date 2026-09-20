@@ -83,6 +83,28 @@ function apiGetActivities(sysId) {
   });
 }
 
+var EMPTY_DETAIL_HTML =
+  '<div class="cp-empty">' +
+    '<svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h9.5l5 5v9.5A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
+      '<path d="M14.5 4v4.5a.5.5 0 0 0 .5.5H19" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
+      '<path d="M8 12.5h8M8 15.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
+    "</svg>" +
+    '<p class="cp-placeholder">Select a case from the list, or create a new one, to see details here.</p>' +
+  "</div>";
+
+var STAT_SKELETON_HTML = (function () {
+  var html = "";
+  for (var i = 0; i < 4; i++) html += '<div class="cp-skel cp-skel-stat"></div>';
+  return html;
+})();
+
+var LIST_SKELETON_HTML = (function () {
+  var html = "";
+  for (var i = 0; i < 4; i++) html += '<div class="cp-skel cp-skel-card"></div>';
+  return html;
+})();
+
 /* ── widget entry point ─────────────────────────────────────────────── */
 
 export async function init(sdk) {
@@ -91,22 +113,45 @@ export async function init(sdk) {
 
   var listBody = root.querySelector("#cp-list-body");
   var detailPane = root.querySelector("#cp-detail-pane");
-  var msgArea = root.querySelector("#cp-msg-area");
+  var statsArea = root.querySelector("#cp-stats");
+  var toastArea = root.querySelector("#cp-toast-area");
   var refreshBtn = root.querySelector("#cp-refresh");
   var newCaseBtn = root.querySelector("#cp-new-case");
 
   var cases = [];
   var selectedSysId = null;
 
-  function showMsg(text, type) {
-    msgArea.innerHTML =
-      '<div class="cp-msg ' + (type === "success" ? "cp-msg-ok" : "cp-msg-err") + '">' + esc(text) + "</div>";
-    if (type === "success") {
-      setTimeout(function () { msgArea.innerHTML = ""; }, 5000);
-    }
+  function showToast(text, type) {
+    var toast = document.createElement("div");
+    toast.className = "cp-toast " + (type === "success" ? "cp-toast-ok" : "cp-toast-err");
+    toast.textContent = text;
+    toastArea.appendChild(toast);
+    setTimeout(function () {
+      toast.classList.add("cp-toast-out");
+      setTimeout(function () { toast.remove(); }, 200);
+    }, type === "success" ? 4000 : 6000);
   }
 
-  function clearMsg() { msgArea.innerHTML = ""; }
+  /* ── KPI stat strip ────────────────────────────────────────────────── */
+
+  var OPEN_STATUSES = { "New": 1, "In Progress": 1, "Awaiting Info": 1 };
+  var RESOLVED_STATUSES = { "Resolved": 1, "Closed": 1 };
+  var CRITICAL_PRIORITIES = { "Critical": 1, "High": 1 };
+
+  function renderStats() {
+    var open = 0, critical = 0, resolved = 0;
+    cases.forEach(function (c) {
+      if (OPEN_STATUSES[c.status]) open++;
+      if (RESOLVED_STATUSES[c.status]) resolved++;
+      if (CRITICAL_PRIORITIES[c.priority]) critical++;
+    });
+
+    statsArea.innerHTML =
+      '<div class="cp-stat-tile cp-stat-tile--total"><p class="cp-stat-label">Total</p><p class="cp-stat-value">' + cases.length + "</p></div>" +
+      '<div class="cp-stat-tile cp-stat-tile--open"><p class="cp-stat-label">Open</p><p class="cp-stat-value">' + open + "</p></div>" +
+      '<div class="cp-stat-tile cp-stat-tile--critical"><p class="cp-stat-label">Critical / High</p><p class="cp-stat-value">' + critical + "</p></div>" +
+      '<div class="cp-stat-tile cp-stat-tile--resolved"><p class="cp-stat-label">Resolved</p><p class="cp-stat-value">' + resolved + "</p></div>";
+  }
 
   function findCase(sysId) {
     for (var i = 0; i < cases.length; i++) {
@@ -119,15 +164,21 @@ export async function init(sdk) {
 
   function renderList() {
     if (!cases.length) {
-      listBody.innerHTML = '<p class="cp-status">You have not created any ServiceNow cases yet.</p>';
+      listBody.innerHTML =
+        '<div class="cp-empty" style="min-height:160px">' +
+          '<svg class="cp-empty-icon" style="width:32px;height:32px" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+            '<path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+          "</svg>" +
+          '<p class="cp-placeholder">You have not created any ServiceNow cases yet.</p>' +
+        "</div>";
       return;
     }
 
     var html = '<div class="cp-list">';
-    cases.forEach(function (c) {
+    cases.forEach(function (c, idx) {
       var active = c.sysId === selectedSysId ? " cp-active" : "";
       html +=
-        '<div class="cp-card' + active + '" data-sys-id="' + esc(c.sysId) + '">' +
+        '<div class="cp-card' + active + '" data-sys-id="' + esc(c.sysId) + '" style="animation-delay:' + (idx * 0.04) + 's">' +
           '<p class="cp-card-title" title="' + esc(c.caseNumber + " — " + c.title) + '">' +
             esc(c.caseNumber) + " — " + esc(c.title) +
           "</p>" +
@@ -151,13 +202,14 @@ export async function init(sdk) {
   function loadCases(preserveSelection) {
     refreshBtn.disabled = true;
     refreshBtn.classList.add("cp-spin");
-    listBody.innerHTML = '<p class="cp-status">Loading your cases&hellip;</p>';
-    clearMsg();
+    listBody.innerHTML = LIST_SKELETON_HTML;
+    statsArea.innerHTML = STAT_SKELETON_HTML;
 
     return apiGetMine()
       .then(function (result) {
         cases = Array.isArray(result) ? result : result.result || result.data || [];
         if (!preserveSelection || !findCase(selectedSysId)) selectedSysId = null;
+        renderStats();
         renderList();
         if (selectedSysId) {
           renderDetail(findCase(selectedSysId));
@@ -169,6 +221,7 @@ export async function init(sdk) {
         listBody.innerHTML =
           '<p class="cp-status">Could not load your cases. Please sign in to the community and try again.</p>';
         cases = [];
+        renderStats();
       })
       .finally(function () {
         refreshBtn.disabled = false;
@@ -185,7 +238,7 @@ export async function init(sdk) {
   /* ── detail pane ───────────────────────────────────────────────────── */
 
   function renderPlaceholder() {
-    detailPane.innerHTML = '<p class="cp-placeholder">Select a case from the list, or create a new one, to see details here.</p>';
+    detailPane.innerHTML = EMPTY_DETAIL_HTML;
   }
 
   function renderDetail(c) {
@@ -243,18 +296,17 @@ export async function init(sdk) {
       };
       detailPane.querySelector("#cp-esc-submit").onclick = function () {
         var reason = detailPane.querySelector("#cp-esc-reason").value.trim();
-        if (!reason) { showMsg("Reason is required.", "error"); return; }
+        if (!reason) { showToast("Reason is required.", "error"); return; }
         var btn = detailPane.querySelector("#cp-esc-submit");
         btn.disabled = true;
         btn.textContent = "Escalating...";
-        clearMsg();
         apiEscalate(c.sysId, { reason: reason, priority: "1", state: "10" })
           .then(function () {
-            showMsg("Case escalated successfully.", "success");
+            showToast("Case escalated successfully.", "success");
             loadCases(true);
           })
           .catch(function (e) {
-            showMsg(e.message || "Escalation failed.", "error");
+            showToast(e.message || "Escalation failed.", "error");
             btn.disabled = false;
             btn.textContent = "Submit Escalation";
           });
@@ -274,20 +326,19 @@ export async function init(sdk) {
 
     detailPane.querySelector("#cp-comment-submit").onclick = function () {
       var text = detailPane.querySelector("#cp-comment-text").value.trim();
-      if (!text) { showMsg("Comment is required.", "error"); return; }
+      if (!text) { showToast("Comment is required.", "error"); return; }
       var btn = detailPane.querySelector("#cp-comment-submit");
       btn.disabled = true;
       btn.textContent = "Submitting...";
-      clearMsg();
       apiAddComment(c.sysId, text)
         .then(function () {
-          showMsg("Comment added successfully.", "success");
+          showToast("Comment added successfully.", "success");
           detailPane.querySelector("#cp-comment-text").value = "";
           detailPane.querySelector("#cp-comment-composer").style.display = "none";
           loadComments(c.sysId);
         })
         .catch(function (e) {
-          showMsg(e.message || "Failed to add comment.", "error");
+          showToast(e.message || "Failed to add comment.", "error");
           btn.disabled = false;
           btn.textContent = "Submit Comment";
         });
@@ -360,7 +411,7 @@ export async function init(sdk) {
     detailPane.querySelector("#cp-c-cancel").onclick = renderPlaceholder;
     detailPane.querySelector("#cp-c-submit").onclick = function () {
       var titleVal = detailPane.querySelector("#cp-c-title").value.trim();
-      if (!titleVal) { showMsg("Title is required.", "error"); return; }
+      if (!titleVal) { showToast("Title is required.", "error"); return; }
 
       var payload = {
         title: titleVal,
@@ -373,16 +424,15 @@ export async function init(sdk) {
       var btn = detailPane.querySelector("#cp-c-submit");
       btn.disabled = true;
       btn.textContent = "Creating...";
-      clearMsg();
 
       apiCreate(payload)
         .then(function (result) {
-          showMsg("Case " + (result.caseNumber || "") + " created successfully.", "success");
+          showToast("Case " + (result.caseNumber || "") + " created successfully.", "success");
           selectedSysId = result && result.sysId ? result.sysId : null;
           loadCases(true);
         })
         .catch(function (e) {
-          showMsg(e.message || "Failed to create case.", "error");
+          showToast(e.message || "Failed to create case.", "error");
           btn.disabled = false;
           btn.textContent = "Create Case";
         });

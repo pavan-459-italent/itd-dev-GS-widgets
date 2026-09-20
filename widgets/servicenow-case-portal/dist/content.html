@@ -10,7 +10,7 @@
     </div>
   </div>
 
-  <div id="cp-msg-area"></div>
+  <div class="cp-stats" id="cp-stats"></div>
 
   <div class="cp-layout">
     <div class="cp-list-pane">
@@ -45,10 +45,19 @@
       <div id="cp-list-body"><p class="cp-status">Loading your cases&hellip;</p></div>
     </div>
     <div class="cp-detail-pane" id="cp-detail-pane">
-      <p class="cp-placeholder">Select a case from the list, or create a new one, to see details here.</p>
+      <div class="cp-empty">
+        <svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h9.5l5 5v9.5A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+          <path d="M14.5 4v4.5a.5.5 0 0 0 .5.5H19" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+          <path d="M8 12.5h8M8 15.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <p class="cp-placeholder">Select a case from the list, or create a new one, to see details here.</p>
+      </div>
     </div>
   </div>
 </div>
+
+<div class="cp-toast-area" id="cp-toast-area"></div>
 
 <style>
   #cp-root {
@@ -105,9 +114,65 @@
   .cp-spin { animation: cp-spin 0.6s linear infinite; }
   @keyframes cp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-  .cp-msg { padding: 10px 14px; border-radius: 6px; font-size: 0.8125rem; margin-bottom: 16px; }
-  .cp-msg-ok { background: #e6f9ed; color: #1f7a3d; }
-  .cp-msg-err { background: #fdecec; color: #9e2b2b; }
+  /* ── KPI stat strip ─────────────────────────────────────────────────── */
+  .cp-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  @media (max-width: 640px) { .cp-stats { grid-template-columns: repeat(2, 1fr); } }
+  .cp-stat-tile {
+    position: relative;
+    overflow: hidden;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #d8e3ee;
+    border-left: 3px solid var(--cp-stat-accent, #8a8aa3);
+    opacity: 0;
+    transform: translateY(6px);
+    animation: cp-rise 0.35s ease forwards;
+  }
+  .cp-stat-tile:nth-child(1) { animation-delay: 0.02s; }
+  .cp-stat-tile:nth-child(2) { animation-delay: 0.08s; }
+  .cp-stat-tile:nth-child(3) { animation-delay: 0.14s; }
+  .cp-stat-tile:nth-child(4) { animation-delay: 0.2s; }
+  .cp-stat-label { margin: 0 0 4px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5a5a72; }
+  .cp-stat-value { margin: 0; font-size: 1.75rem; font-weight: 800; line-height: 1; color: #1e1e2e; font-variant-numeric: tabular-nums; }
+  .cp-stat-tile--total { --cp-stat-accent: #444458; }
+  .cp-stat-tile--open { --cp-stat-accent: #0E6FFF; }
+  .cp-stat-tile--critical { --cp-stat-accent: #d9455f; }
+  .cp-stat-tile--resolved { --cp-stat-accent: #3aa06a; }
+
+  @keyframes cp-rise { to { opacity: 1; transform: translateY(0); } }
+
+  /* ── toasts ─────────────────────────────────────────────────────────── */
+  .cp-toast-area {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .cp-toast {
+    pointer-events: auto;
+    min-width: 240px;
+    max-width: 360px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #1e1e2e;
+    color: #fff;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    border-left: 4px solid #0E6FFF;
+    animation: cp-toast-in 0.25s ease forwards;
+  }
+  .cp-toast.cp-toast-out { animation: cp-toast-out 0.2s ease forwards; }
+  .cp-toast-ok { border-left-color: #3aa06a; }
+  .cp-toast-err { border-left-color: #d9455f; }
+  @keyframes cp-toast-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes cp-toast-out { to { opacity: 0; transform: translateX(16px); } }
 
   .cp-layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
   @media (max-width: 760px) { .cp-layout { grid-template-columns: 1fr; } }
@@ -163,9 +228,13 @@
     background: #fff;
     font-size: 0.8125rem;
     cursor: pointer;
+    opacity: 0;
+    transform: translateY(4px);
+    animation: cp-rise 0.3s ease forwards;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
   }
-  .cp-card:hover { border-color: #0E6FFF; }
-  .cp-card.cp-active { border-color: #0E6FFF; box-shadow: 0 0 0 1px #0E6FFF; }
+  .cp-card:hover { border-color: #0E6FFF; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(14, 111, 255, 0.12); }
+  .cp-card.cp-active { border-color: #0E6FFF; box-shadow: 0 0 0 1px #0E6FFF, 0 4px 10px rgba(14, 111, 255, 0.16); }
   .cp-card-title {
     font-weight: 600;
     margin: 0 0 6px;
@@ -179,21 +248,31 @@
   .cp-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.6875rem; color: #5a5a72; }
 
   .cp-badge {
-    display: inline-block;
-    padding: 1px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px 2px 7px;
     border-radius: 999px;
     font-size: 0.625rem;
-    font-weight: 600;
-    color: #fff;
-    background: #8a8aa3;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--cp-badge-ink, #444458);
+    background: var(--cp-badge-tint, #eceef3);
     text-transform: uppercase;
   }
-  .cp-badge-critical, .cp-badge-high { background: #d9455f; }
-  .cp-badge-moderate { background: #d68a1f; }
-  .cp-badge-low { background: #3aa06a; }
-  .cp-badge-new, .cp-badge-open, .cp-badge-in-progress { background: #0E6FFF; }
-  .cp-badge-closed, .cp-badge-resolved, .cp-badge-cancelled { background: #6b7280; }
-  .cp-badge-awaiting-info { background: #d68a1f; }
+  .cp-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cp-badge-dot, #8a8aa3);
+    flex: none;
+  }
+  .cp-badge-critical, .cp-badge-high { --cp-badge-dot: #d9455f; --cp-badge-ink: #a5273f; --cp-badge-tint: #fce8ec; }
+  .cp-badge-moderate, .cp-badge-awaiting-info { --cp-badge-dot: #d68a1f; --cp-badge-ink: #93600f; --cp-badge-tint: #fbf0dc; }
+  .cp-badge-low { --cp-badge-dot: #3aa06a; --cp-badge-ink: #1f7a3d; --cp-badge-tint: #e6f9ed; }
+  .cp-badge-new, .cp-badge-open, .cp-badge-in-progress { --cp-badge-dot: #0E6FFF; --cp-badge-ink: #094db5; --cp-badge-tint: #e3eefe; }
+  .cp-badge-closed, .cp-badge-resolved, .cp-badge-cancelled { --cp-badge-dot: #6b7280; --cp-badge-ink: #4b5160; --cp-badge-tint: #eceef1; }
 
   .cp-detail-pane {
     border: 1px solid #d8e3ee;
@@ -202,6 +281,13 @@
     padding: 20px;
     min-height: 300px;
   }
+  .cp-detail-pane > * { animation: cp-fade 0.2s ease; }
+  @keyframes cp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .cp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 260px; text-align: center; color: #8a8aa3; }
+  .cp-empty-icon { width: 40px; height: 40px; margin-bottom: 10px; color: #b9c6d6; }
+  .cp-empty .cp-placeholder { padding: 0; max-width: 260px; }
+
   .cp-detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
   .cp-detail-case-title { margin: 0 0 6px; font-size: 1.0625rem; font-weight: 700; }
   .cp-detail-row { margin-bottom: 14px; }
@@ -230,6 +316,21 @@
   .cp-comment-meta { font-size: 0.6875rem; color: #8a8aa3; }
   .cp-comment-empty { font-size: 0.8125rem; color: #5a5a72; padding: 6px 0; }
   .cp-comment-input { width: 100%; padding: 9px 11px; font-family: inherit; font-size: 0.8125rem; border: 1px solid rgba(0, 0, 0, 0.15); border-radius: 6px; min-height: 70px; resize: vertical; margin-bottom: 8px; }
+
+  /* ── skeleton loaders ──────────────────────────────────────────────── */
+  .cp-skel { position: relative; overflow: hidden; background: #e9edf3; border-radius: 6px; }
+  .cp-skel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    animation: cp-shimmer 1.2s ease-in-out infinite;
+  }
+  @keyframes cp-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+  .cp-skel-stat { height: 62px; border-radius: 10px; }
+  .cp-skel-card { height: 66px; border-radius: 8px; margin-bottom: 8px; }
+  .cp-skel-line { height: 12px; margin-bottom: 8px; }
 </style>
 
 <script type="module" src="app.js"></script>
