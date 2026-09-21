@@ -43,6 +43,7 @@
           <th class="cp-th-icon"></th>
           <th data-sort="caseNumber">Case #<span class="cp-sort-icon"></span></th>
           <th data-sort="title">Title<span class="cp-sort-icon"></span></th>
+          <th>Description</th>
           <th data-sort="status">Status<span class="cp-sort-icon"></span></th>
           <th data-sort="priority">Priority<span class="cp-sort-icon"></span></th>
           <th data-sort="createdDate">Opened<span class="cp-sort-icon"></span></th>
@@ -50,7 +51,7 @@
         </tr>
       </thead>
       <tbody id="cp-table-body">
-        <tr><td colspan="7"><p class="cp-status">Loading your cases&hellip;</p></td></tr>
+        <tr><td colspan="8"><p class="cp-status">Loading your cases&hellip;</p></td></tr>
       </tbody>
     </table>
   </div>
@@ -174,7 +175,7 @@
      display:block for their own layouts, which collapses columns into a
      vertical stack. Forcing the roles here keeps the grid intact regardless
      of what the surrounding page does. */
-  .cp-table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 0.8125rem; display: table; }
+  .cp-table { width: 100%; min-width: 920px; border-collapse: collapse; font-size: 0.8125rem; display: table; }
   .cp-table thead { display: table-header-group; }
   .cp-table tbody { display: table-row-group; }
   .cp-table tr { display: table-row; width: 100%; }
@@ -204,7 +205,8 @@
   .cp-table tbody tr.cp-row:hover { background: #f7fafd; }
   .cp-table tbody tr.cp-row.cp-row-expanded { background: #f2f7ff; }
   .cp-table td { padding: 10px 12px; vertical-align: middle; color: #1e1e2e; }
-  .cp-td-title { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cp-td-title { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cp-td-desc { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #5a5a72; }
   .cp-td-muted { color: #5a5a72; }
 
   .cp-action-group { display: flex; align-items: center; gap: 6px; }

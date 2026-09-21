@@ -93,7 +93,7 @@ function apiGetActivities(sysId) {
 }
 
 var EMPTY_ROW_HTML =
-  '<tr><td colspan="7">' +
+  '<tr><td colspan="8">' +
     '<div class="cp-empty">' +
       '<svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
         '<path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>' +
@@ -106,6 +106,7 @@ var SKELETON_ROWS_HTML = (function () {
   var row =
     "<tr>" +
       '<td><div class="cp-skel cp-skel-cell" style="width:16px"></div></td>' +
+      '<td><div class="cp-skel cp-skel-cell"></div></td>' +
       '<td><div class="cp-skel cp-skel-cell"></div></td>' +
       '<td><div class="cp-skel cp-skel-cell"></div></td>' +
       '<td><div class="cp-skel cp-skel-cell"></div></td>' +
@@ -242,7 +243,7 @@ export async function init(sdk) {
 
     if (!visible.length) {
       tableBody.innerHTML = allCases.length ? EMPTY_ROW_HTML : (
-        '<tr><td colspan="7"><div class="cp-empty">' +
+        '<tr><td colspan="8"><div class="cp-empty">' +
           '<svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
             '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h9.5l5 5v9.5A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
             '<path d="M14.5 4v4.5a.5.5 0 0 0 .5.5H19" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
@@ -261,6 +262,7 @@ export async function init(sdk) {
           "<td></td>" +
           "<td>" + esc(c.caseNumber) + "</td>" +
           '<td class="cp-td-title" title="' + esc(c.title) + '">' + esc(c.title) + "</td>" +
+          '<td class="cp-td-desc" title="' + esc(stripMentions(c.description)) + '">' + (c.description ? esc(stripMentions(c.description)) : "—") + "</td>" +
           '<td><span class="cp-badge cp-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span></td>" +
           '<td><span class="cp-badge cp-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span></td>" +
           '<td class="cp-td-muted">' + esc(formatDate(c.createdDate)) + "</td>" +
@@ -276,7 +278,7 @@ export async function init(sdk) {
           "</td>" +
         "</tr>";
       if (isExpanded) {
-        html += '<tr class="cp-expand-row"><td colspan="7"><div class="cp-expand-panel" id="cp-expand-panel"></div></td></tr>';
+        html += '<tr class="cp-expand-row"><td colspan="8"><div class="cp-expand-panel" id="cp-expand-panel"></div></td></tr>';
       }
     });
     tableBody.innerHTML = html;
@@ -321,13 +323,15 @@ export async function init(sdk) {
         '<div>' +
           '<p class="cp-comments-title">Comments</p>' +
           '<div class="cp-comments-list" id="cp-comments-list"><p class="cp-status">Loading comments&hellip;</p></div>' +
-          '<label class="cp-label">Add a comment</label>' +
-          '<textarea class="cp-comment-input" id="cp-comment-text" placeholder="Enter your comment..."></textarea>' +
-          '<button type="button" class="cp-btn cp-btn-primary cp-btn-sm" id="cp-comment-submit">Submit Comment</button>' +
+          '<div class="cp-row" id="cp-comment-actions" style="margin-top:0">' +
+            '<button type="button" class="cp-btn cp-btn-sec cp-btn-sm" id="cp-comment-btn">Add Comment</button>' +
+          "</div>" +
+          '<div id="cp-comment-form"></div>' +
         "</div>" +
       "</div>";
 
     var detailActions = panel.querySelector("#cp-detail-actions");
+    var commentActions = panel.querySelector("#cp-comment-actions");
 
     panel.querySelector("#cp-escalate-btn").onclick = function () {
       var container = panel.querySelector("#cp-escalate-form");
@@ -365,26 +369,44 @@ export async function init(sdk) {
       };
     };
 
-    panel.querySelector("#cp-comment-submit").onclick = function () {
-      var text = panel.querySelector("#cp-comment-text").value.trim();
-      if (!text) { showToast("Comment is required.", "error"); return; }
-      var btn = panel.querySelector("#cp-comment-submit");
-      btn.disabled = true;
-      btn.textContent = "Submitting...";
-      apiAddComment(c.sysId, text)
-        .then(function () {
-          showToast("Comment added successfully.", "success");
-          panel.querySelector("#cp-comment-text").value = "";
-          delete commentsCache[c.sysId];
-          loadComments(c.sysId, panel);
-        })
-        .catch(function (e) {
-          showToast(e.message || "Failed to add comment.", "error");
-        })
-        .finally(function () {
-          btn.disabled = false;
-          btn.textContent = "Submit Comment";
-        });
+    panel.querySelector("#cp-comment-btn").onclick = function () {
+      var container = panel.querySelector("#cp-comment-form");
+      commentActions.style.display = "none";
+      container.innerHTML =
+        '<div class="cp-form-group" style="margin-top:10px">' +
+          '<label class="cp-label">Comment *</label>' +
+          '<textarea class="cp-comment-input" id="cp-comment-text" placeholder="Enter your comment..."></textarea>' +
+        "</div>" +
+        '<div class="cp-row">' +
+          '<button type="button" class="cp-btn cp-btn-primary cp-btn-sm" id="cp-comment-submit">Submit Comment</button>' +
+          '<button type="button" class="cp-btn cp-btn-sec cp-btn-sm" id="cp-comment-cancel">Cancel</button>' +
+        "</div>";
+
+      panel.querySelector("#cp-comment-cancel").onclick = function () {
+        container.innerHTML = "";
+        commentActions.style.display = "";
+      };
+      panel.querySelector("#cp-comment-submit").onclick = function () {
+        var text = panel.querySelector("#cp-comment-text").value.trim();
+        if (!text) { showToast("Comment is required.", "error"); return; }
+        var btn = panel.querySelector("#cp-comment-submit");
+        btn.disabled = true;
+        btn.textContent = "Submitting...";
+        apiAddComment(c.sysId, text)
+          .then(function () {
+            showToast("Comment added successfully.", "success");
+            container.innerHTML = "";
+            commentActions.style.display = "";
+            delete commentsCache[c.sysId];
+            loadComments(c.sysId, panel);
+          })
+          .catch(function (e) {
+            showToast(e.message || "Failed to add comment.", "error");
+            btn.disabled = false;
+            btn.textContent = "Submit Comment";
+          });
+      };
+      panel.querySelector("#cp-comment-text").focus();
     };
 
     loadComments(c.sysId, panel);
@@ -392,7 +414,7 @@ export async function init(sdk) {
     if (action === "escalate") {
       panel.querySelector("#cp-escalate-btn").click();
     } else if (action === "comment") {
-      panel.querySelector("#cp-comment-text").focus();
+      panel.querySelector("#cp-comment-btn").click();
     }
   }
 
@@ -445,7 +467,7 @@ export async function init(sdk) {
       })
       .catch(function () {
         tableBody.innerHTML =
-          '<tr><td colspan="7"><p class="cp-status">Could not load your cases. Please sign in to the community and try again.</p></td></tr>';
+          '<tr><td colspan="8"><p class="cp-status">Could not load your cases. Please sign in to the community and try again.</p></td></tr>';
         allCases = [];
         countEl.textContent = "";
       })
@@ -532,9 +554,10 @@ export async function init(sdk) {
       apiCreate(payload)
         .then(function (result) {
           showToast("Case " + (result.caseNumber || "") + " created successfully.", "success");
-          expandedSysId = result && result.sysId ? result.sysId : null;
+          expandedSysId = null;
+          pendingAction = null;
           closeModal();
-          loadCases(true);
+          loadCases(false);
         })
         .catch(function (e) {
           showToast(e.message || "Failed to create case.", "error");
