@@ -30,6 +30,15 @@ function formatDate(dateStr) {
   });
 }
 
+function debounce(fn, wait) {
+  var timer = null;
+  return function () {
+    var args = arguments;
+    clearTimeout(timer);
+    timer = setTimeout(function () { fn.apply(null, args); }, wait);
+  };
+}
+
 /* ── API calls via Gainsight Connectors SDK (no middleware) ────────────
    Connectors must be called via a fresh window.WidgetServiceSDK instance,
    not the `sdk` object passed to init() — the two are separate objects. */
@@ -83,27 +92,35 @@ function apiGetActivities(sysId) {
   });
 }
 
-var EMPTY_DETAIL_HTML =
-  '<div class="cp-empty">' +
-    '<svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-      '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h9.5l5 5v9.5A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
-      '<path d="M14.5 4v4.5a.5.5 0 0 0 .5.5H19" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
-      '<path d="M8 12.5h8M8 15.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
-    "</svg>" +
-    '<p class="cp-placeholder">Select a case from the list, or create a new one, to see details here.</p>' +
-  "</div>";
+var EMPTY_ROW_HTML =
+  '<tr><td colspan="8">' +
+    '<div class="cp-empty">' +
+      '<svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+        '<path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+      "</svg>" +
+      '<p class="cp-placeholder">No cases match your filters.</p>' +
+    "</div>" +
+  "</td></tr>";
 
-var STAT_SKELETON_HTML = (function () {
-  var html = "";
-  for (var i = 0; i < 4; i++) html += '<div class="cp-skel cp-skel-stat"></div>';
-  return html;
+var SKELETON_ROWS_HTML = (function () {
+  var row =
+    "<tr>" +
+      '<td><div class="cp-skel cp-skel-cell" style="width:16px"></div></td>' +
+      '<td><div class="cp-skel cp-skel-cell"></div></td>' +
+      '<td><div class="cp-skel cp-skel-cell"></div></td>' +
+      '<td><div class="cp-skel cp-skel-cell"></div></td>' +
+      '<td><div class="cp-skel cp-skel-cell"></div></td>' +
+      '<td><div class="cp-skel cp-skel-cell"></div></td>' +
+      '<td><div class="cp-skel cp-skel-cell"></div></td>' +
+      '<td><div class="cp-skel cp-skel-cell" style="width:24px"></div></td>' +
+    "</tr>";
+  return row + row + row + row + row;
 })();
 
-var LIST_SKELETON_HTML = (function () {
-  var html = "";
-  for (var i = 0; i < 4; i++) html += '<div class="cp-skel cp-skel-card"></div>';
-  return html;
-})();
+var EDIT_ICON_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+    '<path d="M4 20l.9-4L16.5 4.4a1.5 1.5 0 0 1 2.1 0l1 1a1.5 1.5 0 0 1 0 2.1L8 19.1 4 20Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>' +
+  "</svg>";
 
 /* ── widget entry point ─────────────────────────────────────────────── */
 
@@ -111,15 +128,25 @@ export async function init(sdk) {
   await sdk.whenReady();
   var root = sdk.getContainer();
 
-  var listBody = root.querySelector("#cp-list-body");
-  var detailPane = root.querySelector("#cp-detail-pane");
-  var statsArea = root.querySelector("#cp-stats");
+  var tableBody = root.querySelector("#cp-table-body");
+  var countEl = root.querySelector("#cp-f-count");
   var toastArea = root.querySelector("#cp-toast-area");
   var refreshBtn = root.querySelector("#cp-refresh");
   var newCaseBtn = root.querySelector("#cp-new-case");
+  var searchInput = root.querySelector("#cp-f-search");
+  var statusSelect = root.querySelector("#cp-f-status");
+  var prioritySelect = root.querySelector("#cp-f-priority");
+  var clearBtn = root.querySelector("#cp-f-clear");
+  var modalBackdrop = root.querySelector("#cp-modal-backdrop");
+  var modalBody = root.querySelector("#cp-modal-body");
+  var modalClose = root.querySelector("#cp-modal-close");
+  var theadRow = root.querySelector("thead tr");
 
-  var cases = [];
-  var selectedSysId = null;
+  var allCases = [];
+  var expandedSysId = null;
+  var commentsCache = {};
+  var filters = { search: "", status: "", priority: "" };
+  var sort = { field: "createdDate", dir: "desc" };
 
   function showToast(text, type) {
     var toast = document.createElement("div");
@@ -132,172 +159,180 @@ export async function init(sdk) {
     }, type === "success" ? 4000 : 6000);
   }
 
-  /* ── KPI stat strip ────────────────────────────────────────────────── */
-
-  var OPEN_STATUSES = { "New": 1, "In Progress": 1, "Awaiting Info": 1 };
-  var RESOLVED_STATUSES = { "Resolved": 1, "Closed": 1 };
-  var CRITICAL_PRIORITIES = { "Critical": 1, "High": 1 };
-
-  function renderStats() {
-    var open = 0, critical = 0, resolved = 0;
-    cases.forEach(function (c) {
-      if (OPEN_STATUSES[c.status]) open++;
-      if (RESOLVED_STATUSES[c.status]) resolved++;
-      if (CRITICAL_PRIORITIES[c.priority]) critical++;
-    });
-
-    statsArea.innerHTML =
-      '<div class="cp-stat-tile cp-stat-tile--total"><p class="cp-stat-label">Total</p><p class="cp-stat-value">' + cases.length + "</p></div>" +
-      '<div class="cp-stat-tile cp-stat-tile--open"><p class="cp-stat-label">Open</p><p class="cp-stat-value">' + open + "</p></div>" +
-      '<div class="cp-stat-tile cp-stat-tile--critical"><p class="cp-stat-label">Critical / High</p><p class="cp-stat-value">' + critical + "</p></div>" +
-      '<div class="cp-stat-tile cp-stat-tile--resolved"><p class="cp-stat-label">Resolved</p><p class="cp-stat-value">' + resolved + "</p></div>";
-  }
-
   function findCase(sysId) {
-    for (var i = 0; i < cases.length; i++) {
-      if (cases[i].sysId === sysId) return cases[i];
+    for (var i = 0; i < allCases.length; i++) {
+      if (allCases[i].sysId === sysId) return allCases[i];
     }
     return null;
   }
 
-  /* ── list pane ─────────────────────────────────────────────────────── */
+  /* ── filtering + sorting (client-side) ────────────────────────────── */
 
-  function renderList() {
-    if (!cases.length) {
-      listBody.innerHTML =
-        '<div class="cp-empty" style="min-height:160px">' +
-          '<svg class="cp-empty-icon" style="width:32px;height:32px" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-            '<path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+  function getVisibleCases() {
+    var q = filters.search.trim().toLowerCase();
+    var list = allCases.filter(function (c) {
+      if (filters.status && c.status !== filters.status) return false;
+      if (filters.priority && c.priority !== filters.priority) return false;
+      if (q) {
+        var hay = (
+          (c.caseNumber || "") + " " +
+          (c.title || "") + " " +
+          (c.description || "")
+        ).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    var field = sort.field;
+    var dir = sort.dir === "asc" ? 1 : -1;
+    list.sort(function (a, b) {
+      var av = a[field] || "";
+      var bv = b[field] || "";
+      if (field === "createdDate") {
+        av = new Date(String(av).replace(" ", "T")).getTime() || 0;
+        bv = new Date(String(bv).replace(" ", "T")).getTime() || 0;
+        return (av - bv) * dir;
+      }
+      av = String(av).toLowerCase();
+      bv = String(bv).toLowerCase();
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+
+    return list;
+  }
+
+  function updateSortIndicators() {
+    theadRow.querySelectorAll("th[data-sort]").forEach(function (th) {
+      th.classList.remove("cp-sort-asc", "cp-sort-desc");
+      if (th.getAttribute("data-sort") === sort.field) {
+        th.classList.add(sort.dir === "asc" ? "cp-sort-asc" : "cp-sort-desc");
+      }
+    });
+  }
+
+  theadRow.querySelectorAll("th[data-sort]").forEach(function (th) {
+    th.onclick = function () {
+      var field = th.getAttribute("data-sort");
+      if (sort.field === field) {
+        sort.dir = sort.dir === "asc" ? "desc" : "asc";
+      } else {
+        sort.field = field;
+        sort.dir = "asc";
+      }
+      updateSortIndicators();
+      renderTable();
+    };
+  });
+  updateSortIndicators();
+
+  /* ── table rendering ───────────────────────────────────────────────── */
+
+  function renderTable() {
+    var visible = getVisibleCases();
+    countEl.textContent = visible.length + " of " + allCases.length + " case" + (allCases.length === 1 ? "" : "s");
+
+    if (!visible.length) {
+      tableBody.innerHTML = allCases.length ? EMPTY_ROW_HTML : (
+        '<tr><td colspan="8"><div class="cp-empty">' +
+          '<svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+            '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h9.5l5 5v9.5A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
+            '<path d="M14.5 4v4.5a.5.5 0 0 0 .5.5H19" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
           "</svg>" +
           '<p class="cp-placeholder">You have not created any ServiceNow cases yet.</p>' +
-        "</div>";
+        "</div></td></tr>"
+      );
       return;
     }
 
-    var html = '<div class="cp-list">';
-    cases.forEach(function (c, idx) {
-      var active = c.sysId === selectedSysId ? " cp-active" : "";
+    var html = "";
+    visible.forEach(function (c) {
+      var isExpanded = c.sysId === expandedSysId;
       html +=
-        '<div class="cp-card' + active + '" data-sys-id="' + esc(c.sysId) + '" style="animation-delay:' + (idx * 0.04) + 's">' +
-          '<p class="cp-card-title" title="' + esc(c.caseNumber + " — " + c.title) + '">' +
-            esc(c.caseNumber) + " — " + esc(c.title) +
-          "</p>" +
-          '<div class="cp-card-meta">' +
-            '<span class="cp-badge cp-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span>" +
-            '<span class="cp-badge cp-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span>" +
-            "<span>" + esc(formatDate(c.createdDate)) + "</span>" +
-          "</div>" +
-        "</div>";
+        '<tr class="cp-row' + (isExpanded ? " cp-row-expanded" : "") + '" data-sys-id="' + esc(c.sysId) + '">' +
+          "<td></td>" +
+          "<td>" + esc(c.caseNumber) + "</td>" +
+          '<td class="cp-td-title" title="' + esc(c.title) + '">' + esc(c.title) + "</td>" +
+          '<td><span class="cp-badge cp-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span></td>" +
+          '<td><span class="cp-badge cp-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span></td>" +
+          '<td class="cp-td-muted">' + esc(c.createdBy || "—") + "</td>" +
+          '<td class="cp-td-muted">' + esc(formatDate(c.createdDate)) + "</td>" +
+          "<td>" +
+            '<button type="button" class="cp-edit-btn' + (isExpanded ? " cp-edit-btn-active" : "") + '" data-edit-sys-id="' + esc(c.sysId) + '" title="Edit / escalate / comment">' +
+              EDIT_ICON_SVG +
+            "</button>" +
+          "</td>" +
+        "</tr>";
+      if (isExpanded) {
+        html += '<tr class="cp-expand-row"><td colspan="8"><div class="cp-expand-panel" id="cp-expand-panel"></div></td></tr>';
+      }
     });
-    html += "</div>";
-    listBody.innerHTML = html;
+    tableBody.innerHTML = html;
 
-    listBody.querySelectorAll(".cp-card").forEach(function (card) {
-      card.onclick = function () {
-        selectCase(card.getAttribute("data-sys-id"));
+    tableBody.querySelectorAll("[data-edit-sys-id]").forEach(function (btn) {
+      btn.onclick = function () {
+        var sysId = btn.getAttribute("data-edit-sys-id");
+        expandedSysId = expandedSysId === sysId ? null : sysId;
+        renderTable();
       };
     });
+
+    if (expandedSysId) {
+      var panel = tableBody.querySelector("#cp-expand-panel");
+      if (panel) renderExpandPanel(panel, findCase(expandedSysId));
+    }
   }
 
-  function loadCases(preserveSelection) {
-    refreshBtn.disabled = true;
-    refreshBtn.classList.add("cp-spin");
-    listBody.innerHTML = LIST_SKELETON_HTML;
-    statsArea.innerHTML = STAT_SKELETON_HTML;
+  /* ── inline expand panel: description, escalate, comments ───────────── */
 
-    return apiGetMine()
-      .then(function (result) {
-        cases = Array.isArray(result) ? result : result.result || result.data || [];
-        if (!preserveSelection || !findCase(selectedSysId)) selectedSysId = null;
-        renderStats();
-        renderList();
-        if (selectedSysId) {
-          renderDetail(findCase(selectedSysId));
-        } else if (!cases.length) {
-          renderPlaceholder();
-        }
-      })
-      .catch(function (e) {
-        listBody.innerHTML =
-          '<p class="cp-status">Could not load your cases. Please sign in to the community and try again.</p>';
-        cases = [];
-        renderStats();
-      })
-      .finally(function () {
-        refreshBtn.disabled = false;
-        refreshBtn.classList.remove("cp-spin");
-      });
-  }
+  function renderExpandPanel(panel, c) {
+    if (!c) return;
 
-  function selectCase(sysId) {
-    selectedSysId = sysId;
-    renderList();
-    renderDetail(findCase(sysId));
-  }
-
-  /* ── detail pane ───────────────────────────────────────────────────── */
-
-  function renderPlaceholder() {
-    detailPane.innerHTML = EMPTY_DETAIL_HTML;
-  }
-
-  function renderDetail(c) {
-    if (!c) { renderPlaceholder(); return; }
-
-    detailPane.innerHTML =
-      '<div class="cp-detail-header">' +
+    panel.innerHTML =
+      '<div class="cp-expand-grid">' +
         '<div>' +
-          '<p class="cp-detail-case-title">' + esc(c.caseNumber) + " — " + esc(c.title) + "</p>" +
-          '<div class="cp-card-meta">' +
-            '<span class="cp-badge cp-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span>" +
-            '<span class="cp-badge cp-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span>" +
-            "<span>Opened " + esc(formatDate(c.createdDate)) + "</span>" +
+          (c.description
+            ? '<div class="cp-detail-row"><div class="cp-detail-label">Description</div><div class="cp-detail-value cp-detail-desc">' + esc(stripMentions(c.description)) + "</div></div>"
+            : '<p class="cp-status">No description provided.</p>') +
+          '<div class="cp-row" id="cp-detail-actions">' +
+            '<button type="button" class="cp-btn cp-btn-primary cp-btn-sm" id="cp-escalate-btn">Escalate</button>' +
           "</div>" +
+          '<div id="cp-escalate-form"></div>' +
         "</div>" +
-      "</div>" +
-      (c.description
-        ? '<div class="cp-detail-row"><div class="cp-detail-label">Description</div><div class="cp-detail-value cp-detail-desc">' + esc(stripMentions(c.description)) + "</div></div>"
-        : "") +
-      '<div class="cp-row" id="cp-detail-actions">' +
-        '<button type="button" class="cp-btn cp-btn-primary" id="cp-escalate-btn">Escalate</button>' +
-        '<button type="button" class="cp-btn cp-btn-sec" id="cp-comment-btn">Add Comment</button>' +
-      "</div>" +
-      '<div id="cp-escalate-form"></div>' +
-      '<hr class="cp-divider">' +
-      '<p class="cp-comments-title">Comments</p>' +
-      '<div id="cp-comments-list"><p class="cp-status">Loading comments&hellip;</p></div>' +
-      '<div id="cp-comment-composer" style="display:none">' +
-        '<label class="cp-label">Add a comment</label>' +
-        '<textarea class="cp-comment-input" id="cp-comment-text" placeholder="Enter your comment..."></textarea>' +
-        '<div class="cp-row">' +
-          '<button type="button" class="cp-btn cp-btn-primary" id="cp-comment-submit">Submit Comment</button>' +
-          '<button type="button" class="cp-btn cp-btn-sec" id="cp-comment-cancel">Cancel</button>' +
+        '<div>' +
+          '<p class="cp-comments-title">Comments</p>' +
+          '<div class="cp-comments-list" id="cp-comments-list"><p class="cp-status">Loading comments&hellip;</p></div>' +
+          '<label class="cp-label">Add a comment</label>' +
+          '<textarea class="cp-comment-input" id="cp-comment-text" placeholder="Enter your comment..."></textarea>' +
+          '<button type="button" class="cp-btn cp-btn-primary cp-btn-sm" id="cp-comment-submit">Submit Comment</button>' +
         "</div>" +
       "</div>";
 
-    var detailActions = detailPane.querySelector("#cp-detail-actions");
+    var detailActions = panel.querySelector("#cp-detail-actions");
 
-    detailPane.querySelector("#cp-escalate-btn").onclick = function () {
-      var container = detailPane.querySelector("#cp-escalate-form");
+    panel.querySelector("#cp-escalate-btn").onclick = function () {
+      var container = panel.querySelector("#cp-escalate-form");
       detailActions.style.display = "none";
       container.innerHTML =
-        '<div class="cp-form-group" style="margin-top:12px">' +
+        '<div class="cp-form-group" style="margin-top:10px">' +
           '<label class="cp-label">Reason *</label>' +
           '<textarea class="cp-textarea" id="cp-esc-reason" placeholder="Explain why this case needs escalation"></textarea>' +
         "</div>" +
         '<div class="cp-row">' +
-          '<button type="button" class="cp-btn cp-btn-primary" id="cp-esc-submit">Submit Escalation</button>' +
-          '<button type="button" class="cp-btn cp-btn-sec" id="cp-esc-cancel">Cancel</button>' +
+          '<button type="button" class="cp-btn cp-btn-primary cp-btn-sm" id="cp-esc-submit">Submit Escalation</button>' +
+          '<button type="button" class="cp-btn cp-btn-sec cp-btn-sm" id="cp-esc-cancel">Cancel</button>' +
         "</div>";
 
-      detailPane.querySelector("#cp-esc-cancel").onclick = function () {
+      panel.querySelector("#cp-esc-cancel").onclick = function () {
         container.innerHTML = "";
         detailActions.style.display = "";
       };
-      detailPane.querySelector("#cp-esc-submit").onclick = function () {
-        var reason = detailPane.querySelector("#cp-esc-reason").value.trim();
+      panel.querySelector("#cp-esc-submit").onclick = function () {
+        var reason = panel.querySelector("#cp-esc-reason").value.trim();
         if (!reason) { showToast("Reason is required.", "error"); return; }
-        var btn = detailPane.querySelector("#cp-esc-submit");
+        var btn = panel.querySelector("#cp-esc-submit");
         btn.disabled = true;
         btn.textContent = "Escalating...";
         apiEscalate(c.sysId, { reason: reason, priority: "1", state: "10" })
@@ -313,75 +348,112 @@ export async function init(sdk) {
       };
     };
 
-    detailPane.querySelector("#cp-comment-btn").onclick = function () {
-      var composer = detailPane.querySelector("#cp-comment-composer");
-      composer.style.display = "block";
-      detailPane.querySelector("#cp-comment-text").focus();
-    };
-
-    detailPane.querySelector("#cp-comment-cancel").onclick = function () {
-      detailPane.querySelector("#cp-comment-text").value = "";
-      detailPane.querySelector("#cp-comment-composer").style.display = "none";
-    };
-
-    detailPane.querySelector("#cp-comment-submit").onclick = function () {
-      var text = detailPane.querySelector("#cp-comment-text").value.trim();
+    panel.querySelector("#cp-comment-submit").onclick = function () {
+      var text = panel.querySelector("#cp-comment-text").value.trim();
       if (!text) { showToast("Comment is required.", "error"); return; }
-      var btn = detailPane.querySelector("#cp-comment-submit");
+      var btn = panel.querySelector("#cp-comment-submit");
       btn.disabled = true;
       btn.textContent = "Submitting...";
       apiAddComment(c.sysId, text)
         .then(function () {
           showToast("Comment added successfully.", "success");
-          detailPane.querySelector("#cp-comment-text").value = "";
-          detailPane.querySelector("#cp-comment-composer").style.display = "none";
-          loadComments(c.sysId);
+          panel.querySelector("#cp-comment-text").value = "";
+          delete commentsCache[c.sysId];
+          loadComments(c.sysId, panel);
         })
         .catch(function (e) {
           showToast(e.message || "Failed to add comment.", "error");
+        })
+        .finally(function () {
           btn.disabled = false;
           btn.textContent = "Submit Comment";
         });
     };
 
-    function loadComments(sysId) {
-      var list = detailPane.querySelector("#cp-comments-list");
-      list.innerHTML = '<p class="cp-status">Loading comments&hellip;</p>';
-      apiGetActivities(sysId)
-        .then(function (comments) { renderComments(comments); })
-        .catch(function (e) {
-          list.innerHTML = '<p class="cp-comment-empty">Could not load comments: ' + esc(e.message) + "</p>";
-        });
-    }
-
-    function renderComments(comments) {
-      var list = detailPane.querySelector("#cp-comments-list");
-      if (!comments || !comments.length) {
-        list.innerHTML = '<p class="cp-comment-empty">No comments yet.</p>';
-        return;
-      }
-      var html = "";
-      comments.forEach(function (cm) {
-        html +=
-          '<div class="cp-comment-item">' +
-            '<p class="cp-comment-text">' + esc(cm.comment) + "</p>" +
-            '<p class="cp-comment-meta">' + esc(cm.createdBy || "System") + " · " + esc(formatDate(cm.createdOn)) + "</p>" +
-          "</div>";
-      });
-      list.innerHTML = html;
-    }
-
-    loadComments(c.sysId);
+    loadComments(c.sysId, panel);
   }
 
-  /* ── create case form ─────────────────────────────────────────────── */
+  function loadComments(sysId, panel) {
+    var list = panel.querySelector("#cp-comments-list");
+    if (commentsCache[sysId]) {
+      renderComments(list, commentsCache[sysId]);
+      return;
+    }
+    list.innerHTML = '<p class="cp-status">Loading comments&hellip;</p>';
+    apiGetActivities(sysId)
+      .then(function (comments) {
+        commentsCache[sysId] = comments || [];
+        renderComments(list, commentsCache[sysId]);
+      })
+      .catch(function (e) {
+        list.innerHTML = '<p class="cp-comment-empty">Could not load comments: ' + esc(e.message) + "</p>";
+      });
+  }
 
-  function renderCreateForm() {
-    selectedSysId = null;
-    renderList();
+  function renderComments(list, comments) {
+    if (!comments || !comments.length) {
+      list.innerHTML = '<p class="cp-comment-empty">No comments yet.</p>';
+      return;
+    }
+    var html = "";
+    comments.forEach(function (cm) {
+      html +=
+        '<div class="cp-comment-item">' +
+          '<p class="cp-comment-text">' + esc(cm.comment) + "</p>" +
+          '<p class="cp-comment-meta">' + esc(cm.createdBy || "System") + " · " + esc(formatDate(cm.createdOn)) + "</p>" +
+        "</div>";
+    });
+    list.innerHTML = html;
+  }
 
-    detailPane.innerHTML =
-      '<p class="cp-pane-title" style="margin-bottom:14px">New Case</p>' +
+  /* ── load cases ────────────────────────────────────────────────────── */
+
+  function loadCases(preserveExpanded) {
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add("cp-spin");
+    tableBody.innerHTML = SKELETON_ROWS_HTML;
+    countEl.textContent = "";
+
+    return apiGetMine()
+      .then(function (result) {
+        allCases = Array.isArray(result) ? result : result.result || result.data || [];
+        if (!preserveExpanded || !findCase(expandedSysId)) expandedSysId = null;
+        renderTable();
+      })
+      .catch(function () {
+        tableBody.innerHTML =
+          '<tr><td colspan="8"><p class="cp-status">Could not load your cases. Please sign in to the community and try again.</p></td></tr>';
+        allCases = [];
+        countEl.textContent = "";
+      })
+      .finally(function () {
+        refreshBtn.disabled = false;
+        refreshBtn.classList.remove("cp-spin");
+      });
+  }
+
+  /* ── client-side filters: debounced search + instant selects ────────── */
+
+  var applyFiltersDebounced = debounce(function () {
+    filters.search = searchInput.value;
+    renderTable();
+  }, 300);
+
+  searchInput.oninput = applyFiltersDebounced;
+  statusSelect.onchange = function () { filters.status = statusSelect.value; renderTable(); };
+  prioritySelect.onchange = function () { filters.priority = prioritySelect.value; renderTable(); };
+  clearBtn.onclick = function () {
+    searchInput.value = "";
+    statusSelect.value = "";
+    prioritySelect.value = "";
+    filters = { search: "", status: "", priority: "" };
+    renderTable();
+  };
+
+  /* ── new case modal ────────────────────────────────────────────────── */
+
+  function openModal() {
+    modalBody.innerHTML =
       '<div class="cp-form-group">' +
         '<label class="cp-label">Title *</label>' +
         '<input class="cp-input" id="cp-c-title" placeholder="Briefly describe your issue">' +
@@ -392,7 +464,7 @@ export async function init(sdk) {
       "</div>" +
       '<div class="cp-form-group">' +
         '<label class="cp-label">Priority</label>' +
-        '<select class="cp-select" id="cp-c-priority">' +
+        '<select class="cp-select" id="cp-c-priority" style="width:100%">' +
           '<option value="1">Critical</option>' +
           '<option value="2">High</option>' +
           '<option value="3" selected>Moderate</option>' +
@@ -408,27 +480,31 @@ export async function init(sdk) {
         '<button type="button" class="cp-btn cp-btn-sec" id="cp-c-cancel">Cancel</button>' +
       "</div>";
 
-    detailPane.querySelector("#cp-c-cancel").onclick = renderPlaceholder;
-    detailPane.querySelector("#cp-c-submit").onclick = function () {
-      var titleVal = detailPane.querySelector("#cp-c-title").value.trim();
+    modalBackdrop.style.display = "flex";
+    modalBody.querySelector("#cp-c-title").focus();
+
+    modalBody.querySelector("#cp-c-cancel").onclick = closeModal;
+    modalBody.querySelector("#cp-c-submit").onclick = function () {
+      var titleVal = modalBody.querySelector("#cp-c-title").value.trim();
       if (!titleVal) { showToast("Title is required.", "error"); return; }
 
       var payload = {
         title: titleVal,
-        description: detailPane.querySelector("#cp-c-desc").value.trim(),
-        priority: detailPane.querySelector("#cp-c-priority").value,
+        description: modalBody.querySelector("#cp-c-desc").value.trim(),
+        priority: modalBody.querySelector("#cp-c-priority").value,
       };
-      var cat = detailPane.querySelector("#cp-c-category").value.trim();
+      var cat = modalBody.querySelector("#cp-c-category").value.trim();
       if (cat) payload.category = cat;
 
-      var btn = detailPane.querySelector("#cp-c-submit");
+      var btn = modalBody.querySelector("#cp-c-submit");
       btn.disabled = true;
       btn.textContent = "Creating...";
 
       apiCreate(payload)
         .then(function (result) {
           showToast("Case " + (result.caseNumber || "") + " created successfully.", "success");
-          selectedSysId = result && result.sysId ? result.sysId : null;
+          expandedSysId = result && result.sysId ? result.sysId : null;
+          closeModal();
           loadCases(true);
         })
         .catch(function (e) {
@@ -439,10 +515,20 @@ export async function init(sdk) {
     };
   }
 
+  function closeModal() {
+    modalBackdrop.style.display = "none";
+    modalBody.innerHTML = "";
+  }
+
+  modalClose.onclick = closeModal;
+  modalBackdrop.onclick = function (evt) {
+    if (evt.target === modalBackdrop) closeModal();
+  };
+
   /* ── wire up and boot ─────────────────────────────────────────────── */
 
   refreshBtn.onclick = function () { loadCases(true); };
-  newCaseBtn.onclick = renderCreateForm;
+  newCaseBtn.onclick = openModal;
 
   sdk.on("destroy", function () {
     refreshBtn.onclick = null;
