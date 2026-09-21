@@ -93,7 +93,7 @@ function apiGetActivities(sysId) {
 }
 
 var EMPTY_ROW_HTML =
-  '<tr><td colspan="8">' +
+  '<tr><td colspan="7">' +
     '<div class="cp-empty">' +
       '<svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
         '<path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>' +
@@ -106,7 +106,6 @@ var SKELETON_ROWS_HTML = (function () {
   var row =
     "<tr>" +
       '<td><div class="cp-skel cp-skel-cell" style="width:16px"></div></td>' +
-      '<td><div class="cp-skel cp-skel-cell"></div></td>' +
       '<td><div class="cp-skel cp-skel-cell"></div></td>' +
       '<td><div class="cp-skel cp-skel-cell"></div></td>' +
       '<td><div class="cp-skel cp-skel-cell"></div></td>' +
@@ -236,7 +235,7 @@ export async function init(sdk) {
 
     if (!visible.length) {
       tableBody.innerHTML = allCases.length ? EMPTY_ROW_HTML : (
-        '<tr><td colspan="8"><div class="cp-empty">' +
+        '<tr><td colspan="7"><div class="cp-empty">' +
           '<svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
             '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h9.5l5 5v9.5A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
             '<path d="M14.5 4v4.5a.5.5 0 0 0 .5.5H19" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
@@ -257,7 +256,6 @@ export async function init(sdk) {
           '<td class="cp-td-title" title="' + esc(c.title) + '">' + esc(c.title) + "</td>" +
           '<td><span class="cp-badge cp-badge-' + slugify(c.status) + '">' + esc(c.status) + "</span></td>" +
           '<td><span class="cp-badge cp-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span></td>" +
-          '<td class="cp-td-muted">' + esc(c.createdBy || "—") + "</td>" +
           '<td class="cp-td-muted">' + esc(formatDate(c.createdDate)) + "</td>" +
           "<td>" +
             '<button type="button" class="cp-edit-btn' + (isExpanded ? " cp-edit-btn-active" : "") + '" data-edit-sys-id="' + esc(c.sysId) + '" title="Edit / escalate / comment">' +
@@ -266,7 +264,7 @@ export async function init(sdk) {
           "</td>" +
         "</tr>";
       if (isExpanded) {
-        html += '<tr class="cp-expand-row"><td colspan="8"><div class="cp-expand-panel" id="cp-expand-panel"></div></td></tr>';
+        html += '<tr class="cp-expand-row"><td colspan="7"><div class="cp-expand-panel" id="cp-expand-panel"></div></td></tr>';
       }
     });
     tableBody.innerHTML = html;
@@ -422,7 +420,7 @@ export async function init(sdk) {
       })
       .catch(function () {
         tableBody.innerHTML =
-          '<tr><td colspan="8"><p class="cp-status">Could not load your cases. Please sign in to the community and try again.</p></td></tr>';
+          '<tr><td colspan="7"><p class="cp-status">Could not load your cases. Please sign in to the community and try again.</p></td></tr>';
         allCases = [];
         countEl.textContent = "";
       })

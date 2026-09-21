@@ -45,13 +45,12 @@
           <th data-sort="title">Title<span class="cp-sort-icon"></span></th>
           <th data-sort="status">Status<span class="cp-sort-icon"></span></th>
           <th data-sort="priority">Priority<span class="cp-sort-icon"></span></th>
-          <th data-sort="createdBy">Requested By<span class="cp-sort-icon"></span></th>
           <th data-sort="createdDate">Opened<span class="cp-sort-icon"></span></th>
           <th class="cp-th-actions">Actions</th>
         </tr>
       </thead>
       <tbody id="cp-table-body">
-        <tr><td colspan="8"><p class="cp-status">Loading your cases&hellip;</p></td></tr>
+        <tr><td colspan="7"><p class="cp-status">Loading your cases&hellip;</p></td></tr>
       </tbody>
     </table>
   </div>
@@ -76,7 +75,9 @@
     box-sizing: border-box;
     max-width: 1280px;
     margin: 0 auto;
+    padding: 0 24px;
   }
+  @media (max-width: 640px) { #cp-root { padding: 0 16px; } }
   #cp-root * { box-sizing: border-box; }
 
   .cp-header {
@@ -168,8 +169,16 @@
   .cp-textarea { min-height: 90px; resize: vertical; }
 
   /* ── table ─────────────────────────────────────────────────────────── */
-  .cp-table-wrap { border: 1px solid #d8e3ee; border-radius: 10px; overflow: hidden; background: #fff; }
-  .cp-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+  .cp-table-wrap { border: 1px solid #d8e3ee; border-radius: 10px; overflow: auto; background: #fff; }
+  /* Explicit table display roles: some host pages reset table/tr/td to
+     display:block for their own layouts, which collapses columns into a
+     vertical stack. Forcing the roles here keeps the grid intact regardless
+     of what the surrounding page does. */
+  .cp-table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 0.8125rem; display: table; }
+  .cp-table thead { display: table-header-group; }
+  .cp-table tbody { display: table-row-group; }
+  .cp-table tr { display: table-row; width: 100%; }
+  .cp-table th, .cp-table td { display: table-cell; }
   .cp-table thead th {
     text-align: left;
     font-size: 0.6875rem;
