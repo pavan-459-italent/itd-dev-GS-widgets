@@ -56,6 +56,8 @@
     </table>
   </div>
 
+  <div class="cp-pagination" id="cp-pagination"></div>
+
   <div class="cp-modal-backdrop" id="cp-modal-backdrop" style="display:none">
     <div class="cp-modal" role="dialog" aria-modal="true" aria-labelledby="cp-modal-title">
       <div class="cp-modal-header">
@@ -200,6 +202,29 @@
   .cp-sort-icon { display: inline-block; width: 10px; margin-left: 3px; opacity: 0.5; }
   th.cp-sort-asc .cp-sort-icon::after { content: "\2191"; opacity: 1; }
   th.cp-sort-desc .cp-sort-icon::after { content: "\2193"; opacity: 1; }
+
+  /* ── pagination ────────────────────────────────────────────────────── */
+  .cp-pagination { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 16px; flex-wrap: wrap; }
+  .cp-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    background: #fff;
+    color: #1e1e2e;
+    cursor: pointer;
+  }
+  .cp-page-btn:hover:not(:disabled):not(.cp-page-btn-active) { background: #f2f6fb; }
+  .cp-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .cp-page-btn-active { background: #0E6FFF; border-color: #0E6FFF; color: #fff; cursor: default; }
+  .cp-page-ellipsis { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; font-size: 0.75rem; color: #8a8aa3; }
 
   .cp-table tbody tr.cp-row { border-bottom: 1px solid #eef2f7; animation: cp-fade 0.2s ease; }
   .cp-table tbody tr.cp-row:hover { background: #f7fafd; }

@@ -128,6 +128,25 @@ var COMMENT_ICON_SVG =
     '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5v-9Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>' +
   "</svg>";
 
+var PAGE_SIZE = 10;
+
+// Builds a windowed list of page numbers with "…" gaps, e.g. [1, "…", 4, 5, 6, "…", 12]
+function getPageNumbers(current, total) {
+  if (total <= 7) {
+    var all = [];
+    for (var i = 1; i <= total; i++) all.push(i);
+    return all;
+  }
+  var pages = [1];
+  var start = Math.max(2, current - 1);
+  var end = Math.min(total - 1, current + 1);
+  if (start > 2) pages.push("…");
+  for (var p = start; p <= end; p++) pages.push(p);
+  if (end < total - 1) pages.push("…");
+  pages.push(total);
+  return pages;
+}
+
 /* ── widget entry point ─────────────────────────────────────────────── */
 
 export async function init(sdk) {
@@ -136,6 +155,7 @@ export async function init(sdk) {
 
   var tableBody = root.querySelector("#cp-table-body");
   var countEl = root.querySelector("#cp-f-count");
+  var paginationEl = root.querySelector("#cp-pagination");
   var toastArea = root.querySelector("#cp-toast-area");
   var refreshBtn = root.querySelector("#cp-refresh");
   var newCaseBtn = root.querySelector("#cp-new-case");
@@ -154,6 +174,7 @@ export async function init(sdk) {
   var commentsCache = {};
   var filters = { search: "", status: "", priority: "" };
   var sort = { field: "createdDate", dir: "desc" };
+  var page = 1;
 
   function showToast(text, type) {
     var toast = document.createElement("div");
@@ -229,6 +250,7 @@ export async function init(sdk) {
         sort.field = field;
         sort.dir = "asc";
       }
+      page = 1;
       updateSortIndicators();
       renderTable();
     };
@@ -239,9 +261,10 @@ export async function init(sdk) {
 
   function renderTable() {
     var visible = getVisibleCases();
-    countEl.textContent = visible.length + " of " + allCases.length + " case" + (allCases.length === 1 ? "" : "s");
 
     if (!visible.length) {
+      countEl.textContent = allCases.length ? "0 of " + allCases.length + " cases" : "";
+      paginationEl.innerHTML = "";
       tableBody.innerHTML = allCases.length ? EMPTY_ROW_HTML : (
         '<tr><td colspan="8"><div class="cp-empty">' +
           '<svg class="cp-empty-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
@@ -254,8 +277,21 @@ export async function init(sdk) {
       return;
     }
 
+    var totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+    if (page > totalPages) page = totalPages;
+    if (page < 1) page = 1;
+
+    var start = (page - 1) * PAGE_SIZE;
+    var pageItems = visible.slice(start, start + PAGE_SIZE);
+
+    countEl.textContent =
+      "Showing " + (start + 1) + "–" + (start + pageItems.length) + " of " + visible.length +
+      (visible.length === allCases.length ? " case" + (visible.length === 1 ? "" : "s") : " matching case" + (visible.length === 1 ? "" : "s") + " (" + allCases.length + " total)");
+
+    renderPagination(totalPages);
+
     var html = "";
-    visible.forEach(function (c) {
+    pageItems.forEach(function (c) {
       var isExpanded = c.sysId === expandedSysId;
       html +=
         '<tr class="cp-row' + (isExpanded ? " cp-row-expanded" : "") + '" data-sys-id="' + esc(c.sysId) + '">' +
@@ -302,6 +338,38 @@ export async function init(sdk) {
       var panel = tableBody.querySelector("#cp-expand-panel");
       if (panel) renderExpandPanel(panel, findCase(expandedSysId), pendingAction);
     }
+  }
+
+  function renderPagination(totalPages) {
+    if (totalPages <= 1) {
+      paginationEl.innerHTML = "";
+      return;
+    }
+
+    var html = '<button type="button" class="cp-page-btn" id="cp-page-prev" ' + (page === 1 ? "disabled" : "") + ' aria-label="Previous page">‹</button>';
+
+    getPageNumbers(page, totalPages).forEach(function (p) {
+      if (p === "…") {
+        html += '<span class="cp-page-ellipsis">…</span>';
+      } else {
+        html += '<button type="button" class="cp-page-btn' + (p === page ? " cp-page-btn-active" : "") + '" data-page="' + p + '">' + p + "</button>";
+      }
+    });
+
+    html += '<button type="button" class="cp-page-btn" id="cp-page-next" ' + (page === totalPages ? "disabled" : "") + ' aria-label="Next page">›</button>';
+
+    paginationEl.innerHTML = html;
+
+    paginationEl.querySelectorAll("[data-page]").forEach(function (btn) {
+      btn.onclick = function () {
+        page = parseInt(btn.getAttribute("data-page"), 10);
+        renderTable();
+      };
+    });
+    var prevBtn = paginationEl.querySelector("#cp-page-prev");
+    var nextBtn = paginationEl.querySelector("#cp-page-next");
+    if (prevBtn) prevBtn.onclick = function () { page -= 1; renderTable(); };
+    if (nextBtn) nextBtn.onclick = function () { page += 1; renderTable(); };
   }
 
   /* ── inline expand panel: description, escalate, comments ───────────── */
@@ -481,17 +549,19 @@ export async function init(sdk) {
 
   var applyFiltersDebounced = debounce(function () {
     filters.search = searchInput.value;
+    page = 1;
     renderTable();
   }, 300);
 
   searchInput.oninput = applyFiltersDebounced;
-  statusSelect.onchange = function () { filters.status = statusSelect.value; renderTable(); };
-  prioritySelect.onchange = function () { filters.priority = prioritySelect.value; renderTable(); };
+  statusSelect.onchange = function () { filters.status = statusSelect.value; page = 1; renderTable(); };
+  prioritySelect.onchange = function () { filters.priority = prioritySelect.value; page = 1; renderTable(); };
   clearBtn.onclick = function () {
     searchInput.value = "";
     statusSelect.value = "";
     prioritySelect.value = "";
     filters = { search: "", status: "", priority: "" };
+    page = 1;
     renderTable();
   };
 
@@ -556,6 +626,7 @@ export async function init(sdk) {
           showToast("Case " + (result.caseNumber || "") + " created successfully.", "success");
           expandedSysId = null;
           pendingAction = null;
+          page = 1;
           closeModal();
           loadCases(false);
         })
