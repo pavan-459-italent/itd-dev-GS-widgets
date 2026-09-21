@@ -116,9 +116,15 @@ var SKELETON_ROWS_HTML = (function () {
   return row + row + row + row + row;
 })();
 
-var EDIT_ICON_SVG =
+var ESCALATE_ICON_SVG =
   '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-    '<path d="M4 20l.9-4L16.5 4.4a1.5 1.5 0 0 1 2.1 0l1 1a1.5 1.5 0 0 1 0 2.1L8 19.1 4 20Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>' +
+    '<path d="M4 17 10 11 13.5 14.5 20 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="M14.5 8H20v5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>' +
+  "</svg>";
+
+var COMMENT_ICON_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+    '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5v-9Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>' +
   "</svg>";
 
 /* ── widget entry point ─────────────────────────────────────────────── */
@@ -143,6 +149,7 @@ export async function init(sdk) {
 
   var allCases = [];
   var expandedSysId = null;
+  var pendingAction = null; // "escalate" | "comment" — which action opened the expanded row
   var commentsCache = {};
   var filters = { search: "", status: "", priority: "" };
   var sort = { field: "createdDate", dir: "desc" };
@@ -258,9 +265,14 @@ export async function init(sdk) {
           '<td><span class="cp-badge cp-badge-' + slugify(c.priority) + '">' + esc(c.priority) + "</span></td>" +
           '<td class="cp-td-muted">' + esc(formatDate(c.createdDate)) + "</td>" +
           "<td>" +
-            '<button type="button" class="cp-edit-btn' + (isExpanded ? " cp-edit-btn-active" : "") + '" data-edit-sys-id="' + esc(c.sysId) + '" title="Edit / escalate / comment">' +
-              EDIT_ICON_SVG +
-            "</button>" +
+            '<div class="cp-action-group">' +
+              '<button type="button" class="cp-action-btn cp-action-btn--escalate' + (isExpanded && pendingAction === "escalate" ? " cp-action-btn-active" : "") + '" data-action="escalate" data-sys-id="' + esc(c.sysId) + '" title="Escalate">' +
+                ESCALATE_ICON_SVG +
+              "</button>" +
+              '<button type="button" class="cp-action-btn cp-action-btn--comment' + (isExpanded && pendingAction === "comment" ? " cp-action-btn-active" : "") + '" data-action="comment" data-sys-id="' + esc(c.sysId) + '" title="Add comment">' +
+                COMMENT_ICON_SVG +
+              "</button>" +
+            "</div>" +
           "</td>" +
         "</tr>";
       if (isExpanded) {
@@ -269,23 +281,30 @@ export async function init(sdk) {
     });
     tableBody.innerHTML = html;
 
-    tableBody.querySelectorAll("[data-edit-sys-id]").forEach(function (btn) {
+    tableBody.querySelectorAll("[data-action]").forEach(function (btn) {
       btn.onclick = function () {
-        var sysId = btn.getAttribute("data-edit-sys-id");
-        expandedSysId = expandedSysId === sysId ? null : sysId;
+        var sysId = btn.getAttribute("data-sys-id");
+        var action = btn.getAttribute("data-action");
+        if (expandedSysId === sysId && pendingAction === action) {
+          expandedSysId = null;
+          pendingAction = null;
+        } else {
+          expandedSysId = sysId;
+          pendingAction = action;
+        }
         renderTable();
       };
     });
 
     if (expandedSysId) {
       var panel = tableBody.querySelector("#cp-expand-panel");
-      if (panel) renderExpandPanel(panel, findCase(expandedSysId));
+      if (panel) renderExpandPanel(panel, findCase(expandedSysId), pendingAction);
     }
   }
 
   /* ── inline expand panel: description, escalate, comments ───────────── */
 
-  function renderExpandPanel(panel, c) {
+  function renderExpandPanel(panel, c, action) {
     if (!c) return;
 
     panel.innerHTML =
@@ -369,6 +388,12 @@ export async function init(sdk) {
     };
 
     loadComments(c.sysId, panel);
+
+    if (action === "escalate") {
+      panel.querySelector("#cp-escalate-btn").click();
+    } else if (action === "comment") {
+      panel.querySelector("#cp-comment-text").focus();
+    }
   }
 
   function loadComments(sysId, panel) {
@@ -473,6 +498,10 @@ export async function init(sdk) {
         '<label class="cp-label">Category</label>' +
         '<input class="cp-input" id="cp-c-category" placeholder="e.g. Network">' +
       "</div>" +
+      '<div class="cp-form-group">' +
+        '<label class="cp-label">Subcategory</label>' +
+        '<input class="cp-input" id="cp-c-subcategory" placeholder="e.g. VPN">' +
+      "</div>" +
       '<div class="cp-row">' +
         '<button type="button" class="cp-btn cp-btn-primary" id="cp-c-submit">Create Case</button>' +
         '<button type="button" class="cp-btn cp-btn-sec" id="cp-c-cancel">Cancel</button>' +
@@ -493,6 +522,8 @@ export async function init(sdk) {
       };
       var cat = modalBody.querySelector("#cp-c-category").value.trim();
       if (cat) payload.category = cat;
+      var subcat = modalBody.querySelector("#cp-c-subcategory").value.trim();
+      if (subcat) payload.subcategory = subcat;
 
       var btn = modalBody.querySelector("#cp-c-submit");
       btn.disabled = true;

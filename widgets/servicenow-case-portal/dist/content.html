@@ -195,7 +195,7 @@
   .cp-table thead th[data-sort] { cursor: pointer; }
   .cp-table thead th[data-sort]:hover { color: #0E6FFF; }
   .cp-th-icon { width: 32px; }
-  .cp-th-actions { width: 90px; }
+  .cp-th-actions { width: 110px; }
   .cp-sort-icon { display: inline-block; width: 10px; margin-left: 3px; opacity: 0.5; }
   th.cp-sort-asc .cp-sort-icon::after { content: "\2191"; opacity: 1; }
   th.cp-sort-desc .cp-sort-icon::after { content: "\2193"; opacity: 1; }
@@ -207,7 +207,8 @@
   .cp-td-title { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cp-td-muted { color: #5a5a72; }
 
-  .cp-edit-btn {
+  .cp-action-group { display: flex; align-items: center; gap: 6px; }
+  .cp-action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -221,9 +222,11 @@
     color: #5a5a72;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
-  .cp-edit-btn:hover { background: #0E6FFF; border-color: #0E6FFF; color: #fff; }
-  .cp-edit-btn.cp-edit-btn-active { background: #0E6FFF; border-color: #0E6FFF; color: #fff; }
-  .cp-edit-btn svg { width: 14px; height: 14px; }
+  .cp-action-btn svg { width: 14px; height: 14px; }
+  .cp-action-btn--escalate:hover { background: #d9455f; border-color: #d9455f; color: #fff; }
+  .cp-action-btn--escalate.cp-action-btn-active { background: #d9455f; border-color: #d9455f; color: #fff; }
+  .cp-action-btn--comment:hover { background: #0E6FFF; border-color: #0E6FFF; color: #fff; }
+  .cp-action-btn--comment.cp-action-btn-active { background: #0E6FFF; border-color: #0E6FFF; color: #fff; }
 
   .cp-expand-row td { padding: 0; border-bottom: 1px solid #eef2f7; }
   .cp-expand-panel {
