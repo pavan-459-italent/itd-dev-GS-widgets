@@ -67,6 +67,36 @@
             ]
           },
           {
+            "name": "customer_role",
+            "type": "text",
+            "label": "Customer Champion Role",
+            "description": "Exact community role name for Customer champions. Leave blank to skip.",
+            "defaultValue": "Customer Community Champion",
+            "rules": {
+              "maxLength": 255
+            }
+          },
+          {
+            "name": "employee_role",
+            "type": "text",
+            "label": "Employee Champion Role",
+            "description": "Exact community role name for Employee champions. Leave blank to skip.",
+            "defaultValue": "Employee Community Champion",
+            "rules": {
+              "maxLength": 255
+            }
+          },
+          {
+            "name": "partner_role",
+            "type": "text",
+            "label": "Partner Champion Role",
+            "description": "Exact community role name for Partner champions. Leave blank to skip.",
+            "defaultValue": "Partner Community Champion",
+            "rules": {
+              "maxLength": 255
+            }
+          },
+          {
             "name": "limit",
             "type": "number",
             "label": "Champions Per Period",
@@ -109,6 +139,9 @@
       "defaultConfig": {
         "title": "Featured Champions",
         "role": "all",
+        "customer_role": "Customer Community Champion",
+        "employee_role": "Employee Community Champion",
+        "partner_role": "Partner Community Champion",
         "limit": 20,
         "cadence": "weekly",
         "anchor_date": "2026-09-07"

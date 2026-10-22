@@ -244,7 +244,7 @@
 </section>
 
 <script type="module">
-  const VERSION = '0.1.0';
+  const VERSION = '0.2.0';
   const CONNECTOR = 'cc-users-champions-list';
   // Loaded only when the platform has not already exposed WidgetServiceSDK.
   const SDK_URL = 'https://static.customer-hub.northpass.com/widget-sdk/latest/index.umd.js';
@@ -253,18 +253,38 @@
   const MAX_BADGES = 8;
   const MS_WEEK = 604800000;
 
-  const ROLE_SETS = {
-    all: ['Customer Community Champion', 'Employee Community Champion', 'Partner Community Champion'],
-    customer: ['Customer Community Champion'],
-    employee: ['Employee Community Champion'],
-    partner: ['Partner Community Champion']
+  // The three champion slots. The community role name behind each slot is a
+  // builder setting (prop), so a community whose roles are named differently
+  // (e.g. the ITD sandbox) can point a slot at any existing role. The card label
+  // stays tied to the slot, not to the role name.
+  const ROLE_SLOTS = {
+    customer: { prop: 'customer_role', name: 'Customer Community Champion', label: 'Community Champion Customer' },
+    employee: { prop: 'employee_role', name: 'Employee Community Champion', label: 'Community Champion Employee' },
+    partner: { prop: 'partner_role', name: 'Partner Community Champion', label: 'Community Champion Partner' }
   };
 
-  const ROLE_LABELS = {
-    'Customer Community Champion': 'Community Champion Customer',
-    'Employee Community Champion': 'Community Champion Employee',
-    'Partner Community Champion': 'Community Champion Partner'
+  const ROLE_SETS = {
+    all: ['customer', 'employee', 'partner'],
+    customer: ['customer'],
+    employee: ['employee'],
+    partner: ['partner']
   };
+
+  // Slots to fetch for this config. Blank role names are skipped, and a role
+  // name used by two slots is fetched once (under the first slot).
+  function resolveRoles(props, roleKey) {
+    const seen = Object.create(null);
+    const out = [];
+    ROLE_SETS[roleKey].forEach(function (key) {
+      const slot = ROLE_SLOTS[key];
+      const raw = props[slot.prop];
+      const name = String(raw == null ? slot.name : raw).trim();
+      if (!name || seen[name]) return;
+      seen[name] = true;
+      out.push({ name: name, label: slot.label });
+    });
+    return out;
+  }
 
   const ROLE_ICON_SVG =
     '<svg class="zm-fc__role-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">' +
@@ -304,6 +324,7 @@
   // One role, following the connector's pagination. The connector's role-filter
   // default must stay blank: the key ends in [] so overrides are appended.
   async function fetchRole(api, role) {
+    // role: { name, label } from resolveRoles()
     const items = [];
     let page = 1, total = Infinity, serverTime = null;
 
@@ -312,7 +333,7 @@
         permalink: CONNECTOR,
         method: 'GET',
         queryParams: {
-          'filter[roles.rolename][]': role,
+          'filter[roles.rolename][]': role.name,
           page: String(page),
           pageSize: String(FETCH_PAGE_SIZE)
         }
@@ -344,7 +365,7 @@
         const key = String(champion && champion.userid);
         if (!champion || champion.userid == null || seen[key]) return;
         seen[key] = true;
-        spread.push({ champion: Object.assign({ _role: result.role }, champion), at: (i + 0.5) / n });
+        spread.push({ champion: Object.assign({ _roleLabel: result.role.label }, champion), at: (i + 0.5) / n });
       });
     });
 
@@ -450,7 +471,7 @@
 
     const role = el('div', 'zm-fc__role');
     role.insertAdjacentHTML('afterbegin', ROLE_ICON_SVG);
-    role.appendChild(el('span', '', ROLE_LABELS[champion._role] || champion._role || ''));
+    role.appendChild(el('span', '', champion._roleLabel || ''));
     ident.appendChild(role);
 
     const since = memberSince(champion.member_since);
@@ -515,8 +536,14 @@
       statusEl.textContent = 'Loading champions…';
 
       try {
+        const roles = resolveRoles(props, roleKey);
+        if (!roles.length) {
+          statusEl.textContent = 'No champion roles configured.';
+          return;
+        }
+
         await loadSdk();
-        const loaded = await loadPool(new window.WidgetServiceSDK(), ROLE_SETS[roleKey]);
+        const loaded = await loadPool(new window.WidgetServiceSDK(), roles);
         if (seq !== renderSeq) return;  // a newer render superseded this one
 
         if (!loaded.pool.length) {
@@ -533,6 +560,7 @@
         gridEl.hidden = false;
 
         console.log('[zm-fc] v' + VERSION, roleKey, {
+          roles: roles.map(function (r) { return r.name; }),
           pool: loaded.pool.length,
           period: period,
           pageOfCycle: (period % pages) + 1 + ' of ' + pages,
