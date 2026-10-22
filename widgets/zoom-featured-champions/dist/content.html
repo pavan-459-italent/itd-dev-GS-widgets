@@ -1,0 +1,552 @@
+<!--
+  Featured Champions (zoom-featured-champions)
+
+  Data: "CC Users - Champions List" connector (permalink cc-users-champions-list),
+  called once per champion role through window.WidgetServiceSDK. OAuth, role
+  filtering and PII stripping all happen server-side in the connector.
+
+  Rotation (agreed spec, 23 Sep 2026): champions are sorted by userid within
+  each role, the roles are interleaved in proportion to their size, and the list
+  is split into pages of `limit`. Page shown = whole periods since the anchor
+  date mod number of pages, using the connector's server_time. Nothing is
+  stored in the browser, so every visitor sees the same set.
+
+  View More reveals the following pages in the same order without changing
+  the period's featured set, and stops once every champion has been shown.
+-->
+
+<style>
+  :host { display: block; }
+  [hidden] { display: none !important; }
+
+  .zm-fc {
+    --zm-fc-navy: #00053D;
+    --zm-fc-blue: #0B5CFF;
+    --zm-fc-blue-hover: #0047D6;
+    --zm-fc-btn-navy: #1A2C8F;
+    --zm-fc-orange: #F26B1D;
+    --zm-fc-maroon: #B42318;
+    --zm-fc-text: #131619;
+    --zm-fc-muted: #4F5663;
+    box-sizing: border-box;
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    font-family: var(--config--main-font-base-stack, "Inter", system-ui, -apple-system, "Segoe UI", sans-serif);
+    color: var(--zm-fc-text);
+  }
+  .zm-fc *, .zm-fc *::before, .zm-fc *::after { box-sizing: inherit; }
+
+  .zm-fc__title {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--zm-fc-navy);
+    text-align: center;
+  }
+
+  .zm-fc__status {
+    font-size: 14px;
+    color: var(--zm-fc-muted);
+    text-align: center;
+    padding: 24px 0;
+  }
+
+  /* ── Grid ── */
+  .zm-fc__grid {
+    width: 100%;
+    max-width: 1360px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: 17px;
+    row-gap: 22px;
+  }
+
+  /* ── Card ── */
+  .zm-fc__card {
+    display: flex;
+    gap: 15px;
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid #EFE0E0;
+    border-radius: 13px;
+    background: linear-gradient(180deg, #FFFFFF 0%, #DCD8EB 100%);
+    animation: zm-fc-in 0.3s ease both;
+  }
+
+  @keyframes zm-fc-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .zm-fc__left {
+    flex: 0 0 129px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 13px;
+  }
+
+  .zm-fc__avatar,
+  .zm-fc__initials {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+  .zm-fc__avatar { display: block; object-fit: cover; background: #F4F5F6; }
+  .zm-fc__initials {
+    display: grid;
+    place-items: center;
+    background: var(--zm-fc-blue);
+    color: #fff;
+    font-size: 26px;
+    font-weight: 600;
+  }
+
+  .zm-fc__badges {
+    display: grid;
+    grid-template-columns: repeat(4, 27.5px);
+    gap: 6px;
+    justify-content: center;
+  }
+  .zm-fc__badge {
+    width: 27.5px;
+    height: 27.5px;
+    border-radius: 6px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .zm-fc__right {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+  }
+
+  .zm-fc__ident { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+  .zm-fc__name {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--zm-fc-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .zm-fc__role {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 28px;
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--zm-fc-text);
+  }
+  .zm-fc__role-icon {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--zm-fc-orange);
+  }
+
+  .zm-fc__since {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--zm-fc-maroon);
+  }
+
+  .zm-fc__stats {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--zm-fc-text);
+  }
+  .zm-fc__stat { display: flex; align-items: center; gap: 6px; }
+  .zm-fc__stat-icon {
+    flex: 0 0 13px;
+    width: 13px;
+    height: 13px;
+    color: var(--zm-fc-blue);
+  }
+  .zm-fc__stat b { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .zm-fc__profile {
+    align-self: flex-start;
+    margin-top: auto;
+    display: inline-block;
+    padding: 5px 22px;
+    border-radius: 999px;
+    background: var(--zm-fc-btn-navy);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+  }
+  .zm-fc__profile:hover { background: var(--zm-fc-navy); }
+  .zm-fc__profile:focus-visible { outline: 2px solid var(--zm-fc-blue); outline-offset: 2px; }
+
+  /* ── Show more ── */
+  .zm-fc__more {
+    width: 240px;
+    max-width: 100%;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--zm-fc-blue);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .zm-fc__more:hover { background: var(--zm-fc-blue-hover); }
+  .zm-fc__more:focus-visible { outline: 2px solid var(--zm-fc-navy); outline-offset: 2px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1280px) {
+    .zm-fc__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 960px) {
+    .zm-fc { padding: 40px 24px; gap: 28px; }
+    .zm-fc__title { font-size: 32px; }
+    .zm-fc__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 600px) {
+    .zm-fc { padding: 32px 16px; }
+    .zm-fc__title { font-size: 26px; }
+    .zm-fc__grid { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .zm-fc__card { animation: none; }
+  }
+</style>
+
+<section class="zm-fc">
+  <h2 class="zm-fc__title">Featured Champions</h2>  <div class="zm-fc__status" role="status">Loading champions…</div>
+  <div class="zm-fc__grid" hidden></div>
+  <button class="zm-fc__more" type="button" hidden>Show more</button>
+</section>
+
+<script type="module">
+  const VERSION = '0.1.0';
+  const CONNECTOR = 'cc-users-champions-list';
+  // Loaded only when the platform has not already exposed WidgetServiceSDK.
+  const SDK_URL = 'https://static.customer-hub.northpass.com/widget-sdk/latest/index.umd.js';
+  const FETCH_PAGE_SIZE = 200;
+  const MAX_FETCH_PAGES = 25;
+  const MAX_BADGES = 8;
+  const MS_WEEK = 604800000;
+
+  const ROLE_SETS = {
+    all: ['Customer Community Champion', 'Employee Community Champion', 'Partner Community Champion'],
+    customer: ['Customer Community Champion'],
+    employee: ['Employee Community Champion'],
+    partner: ['Partner Community Champion']
+  };
+
+  const ROLE_LABELS = {
+    'Customer Community Champion': 'Community Champion Customer',
+    'Employee Community Champion': 'Community Champion Employee',
+    'Partner Community Champion': 'Community Champion Partner'
+  };
+
+  const ROLE_ICON_SVG =
+    '<svg class="zm-fc__role-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">' +
+      '<circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.6"/>' +
+      '<path d="M7 5.5h6v2.8a3 3 0 0 1-6 0V5.5Z" fill="currentColor"/>' +
+      '<path d="M7 6.5H5.6a1.6 1.6 0 0 0 1.6 2.3M13 6.5h1.4a1.6 1.6 0 0 1-1.6 2.3" stroke="currentColor" stroke-width="1.1"/>' +
+      '<path d="M10 11.3v1.9M7.8 14.5h4.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
+    '</svg>';
+
+  const STAT_ICON_SVG =
+    '<svg class="zm-fc__stat-icon" viewBox="0 0 14 14" fill="none" aria-hidden="true">' +
+      '<circle cx="7" cy="7" r="5.6" stroke="currentColor" stroke-width="2.2"/>' +
+    '</svg>';
+
+  /* ── rotation ─────────────────────────────────────────────────────────── */
+
+  // Whole periods since the anchor date. `now` is the connector's server_time
+  // when present, so a visitor with a wrong device clock still agrees on the week.
+  function periodIndex(anchorISO, cadence, now) {
+    const anchor = Date.parse(String(anchorISO || '') + 'T00:00:00Z');
+    if (Number.isNaN(anchor)) return 0;
+    if (!Number.isFinite(now)) now = Date.now();
+    if (now <= anchor) return 0;
+    if (cadence === 'monthly') {
+      const a = new Date(anchor), n = new Date(now);
+      return Math.max(0, (n.getUTCFullYear() - a.getUTCFullYear()) * 12 + (n.getUTCMonth() - a.getUTCMonth()));
+    }
+    return Math.floor((now - anchor) / MS_WEEK);
+  }
+
+  function pageSlice(pool, page, perPage) {
+    return pool.slice(page * perPage, (page + 1) * perPage);
+  }
+
+  /* ── data ─────────────────────────────────────────────────────────────── */
+
+  // One role, following the connector's pagination. The connector's role-filter
+  // default must stay blank: the key ends in [] so overrides are appended.
+  async function fetchRole(api, role) {
+    const items = [];
+    let page = 1, total = Infinity, serverTime = null;
+
+    while (items.length < total && page <= MAX_FETCH_PAGES) {
+      const res = await api.connectors.execute({
+        permalink: CONNECTOR,
+        method: 'GET',
+        queryParams: {
+          'filter[roles.rolename][]': role,
+          page: String(page),
+          pageSize: String(FETCH_PAGE_SIZE)
+        }
+      });
+      const batch = res && Array.isArray(res.champions) ? res.champions : [];
+      if (res && Number.isFinite(Number(res.total))) total = Number(res.total);
+      if (res && Number.isFinite(Number(res.server_time))) serverTime = Number(res.server_time) * 1000;
+      if (!batch.length) break;
+      items.push(...batch);
+      page++;
+    }
+
+    items.sort(function (a, b) { return Number(a.userid) - Number(b.userid); });
+    return { items: items, serverTime: serverTime, role: role };
+  }
+
+  // Interleave roles by relative position so every page carries the same blend.
+  // Sorting everyone by userid would not mix: employee ids cluster low.
+  async function loadPool(api, roles) {
+    const results = await Promise.all(roles.map(function (r) { return fetchRole(api, r); }));
+    let serverTime = null;
+    const seen = Object.create(null);
+    const spread = [];
+
+    results.forEach(function (result) {
+      if (serverTime === null && result.serverTime !== null) serverTime = result.serverTime;
+      const n = result.items.length;
+      result.items.forEach(function (champion, i) {
+        const key = String(champion && champion.userid);
+        if (!champion || champion.userid == null || seen[key]) return;
+        seen[key] = true;
+        spread.push({ champion: Object.assign({ _role: result.role }, champion), at: (i + 0.5) / n });
+      });
+    });
+
+    spread.sort(function (a, b) {
+      return a.at - b.at || Number(a.champion.userid) - Number(b.champion.userid);
+    });
+    return { pool: spread.map(function (s) { return s.champion; }), serverTime: serverTime };
+  }
+
+  function loadSdk() {
+    if (window.WidgetServiceSDK) return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      const s = document.createElement('script');
+      s.src = SDK_URL;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error('Widget SDK failed to load')); };
+      document.head.appendChild(s);
+    });
+  }
+
+  /* ── rendering ────────────────────────────────────────────────────────── */
+
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function count(value) {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
+  function initials(name) {
+    return String(name || '').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || '?';
+  }
+
+  // member_since is Unix seconds.
+  function memberSince(seconds) {
+    const n = Number(seconds);
+    if (!Number.isFinite(n) || n <= 0) return '';
+    const d = new Date(n * 1000);
+    return 'Member since : ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  }
+
+  // Community profile URL: /members/<username>-<userid>
+  function profileUrl(champion) {
+    const slug = String(champion.username || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return '/members/' + (slug ? slug + '-' : '') + encodeURIComponent(champion.userid);
+  }
+
+  function avatarNode(champion) {
+    if (!champion.avatar) return el('div', 'zm-fc__initials', initials(champion.username));
+    const img = document.createElement('img');
+    img.className = 'zm-fc__avatar';
+    img.src = champion.avatar;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.addEventListener('error', function () {
+      img.replaceWith(el('div', 'zm-fc__initials', initials(champion.username)));
+    });
+    return img;
+  }
+
+  function badgeImage(badge) {
+    const img = document.createElement('img');
+    img.className = 'zm-fc__badge';
+    img.src = badge.image;
+    img.alt = badge.title || 'Badge';
+    img.title = badge.title || '';
+    img.loading = 'lazy';
+    img.addEventListener('error', function () { img.remove(); });
+    return img;
+  }
+
+  function statNode(label, value) {
+    const li = el('li', 'zm-fc__stat');
+    li.insertAdjacentHTML('afterbegin', STAT_ICON_SVG);
+    li.appendChild(document.createTextNode(label + ' : '));
+    li.appendChild(el('b', '', count(value).toLocaleString('en-US')));
+    return li;
+  }
+
+  function card(champion) {
+    const node = el('article', 'zm-fc__card');
+    node.dataset.uid = String(champion.userid);
+
+    const left = el('div', 'zm-fc__left');
+    left.appendChild(avatarNode(champion));
+    const badges = Array.isArray(champion.badges) ? champion.badges.filter(function (b) { return b && b.image; }) : [];
+    if (badges.length) {
+      const grid = el('div', 'zm-fc__badges');
+      badges.slice(0, MAX_BADGES).forEach(function (b) { grid.appendChild(badgeImage(b)); });
+      left.appendChild(grid);
+    }
+
+    const right = el('div', 'zm-fc__right');
+    const ident = el('div', 'zm-fc__ident');
+    const name = el('h3', 'zm-fc__name', champion.username || '');
+    name.title = champion.username || '';
+    ident.appendChild(name);
+
+    const role = el('div', 'zm-fc__role');
+    role.insertAdjacentHTML('afterbegin', ROLE_ICON_SVG);
+    role.appendChild(el('span', '', ROLE_LABELS[champion._role] || champion._role || ''));
+    ident.appendChild(role);
+
+    const since = memberSince(champion.member_since);
+    if (since) ident.appendChild(el('div', 'zm-fc__since', since));
+    right.appendChild(ident);
+
+    const stats = el('ul', 'zm-fc__stats');
+    stats.appendChild(statNode('Topics', champion.topics));
+    stats.appendChild(statNode('Replies', champion.replies));
+    stats.appendChild(statNode('Solutions', champion.solved));
+    right.appendChild(stats);
+
+    const link = el('a', 'zm-fc__profile', 'View profile');
+    link.href = profileUrl(champion);
+    link.setAttribute('aria-label', 'View profile of ' + (champion.username || 'champion'));
+    right.appendChild(link);
+
+    node.appendChild(left);
+    node.appendChild(right);
+    return node;
+  }
+
+  /* ── entry ────────────────────────────────────────────────────────────── */
+
+  export async function init(sdk) {
+    await sdk.whenReady();
+
+    const titleEl = sdk.$('.zm-fc__title');
+    const statusEl = sdk.$('.zm-fc__status');
+    const gridEl = sdk.$('.zm-fc__grid');
+    const moreBtn = sdk.$('.zm-fc__more');
+
+    let state = null;  // { pool, perPage, pages, firstPage, shown }
+    let renderSeq = 0;
+
+    function showPage(offset) {
+      const page = (state.firstPage + offset) % state.pages;
+      pageSlice(state.pool, page, state.perPage).forEach(function (c) { gridEl.appendChild(card(c)); });
+      state.shown = offset + 1;
+      moreBtn.hidden = state.shown >= state.pages;
+    }
+
+    moreBtn.addEventListener('click', function () {
+      if (!state || state.shown >= state.pages) return;
+      showPage(state.shown);
+    });
+
+    async function render(props) {
+      props = props || {};
+      const seq = ++renderSeq;
+      const roleKey = ROLE_SETS[props.role] ? props.role : 'all';
+      const perPage = Math.max(1, Math.floor(Number(props.limit)) || 20);
+      const cadence = props.cadence === 'monthly' ? 'monthly' : 'weekly';
+      const anchor = props.anchor_date || '2026-09-07';
+
+      titleEl.textContent = props.title || 'Featured Champions';
+      state = null;
+      gridEl.hidden = true;
+      moreBtn.hidden = true;
+      gridEl.replaceChildren();
+      statusEl.hidden = false;
+      statusEl.textContent = 'Loading champions…';
+
+      try {
+        await loadSdk();
+        const loaded = await loadPool(new window.WidgetServiceSDK(), ROLE_SETS[roleKey]);
+        if (seq !== renderSeq) return;  // a newer render superseded this one
+
+        if (!loaded.pool.length) {
+          statusEl.textContent = 'No champions to show yet.';
+          return;
+        }
+
+        const period = periodIndex(anchor, cadence, loaded.serverTime);
+        const pages = Math.max(1, Math.ceil(loaded.pool.length / perPage));
+        state = { pool: loaded.pool, perPage: perPage, pages: pages, firstPage: period % pages, shown: 0 };
+
+        showPage(0);
+        statusEl.hidden = true;
+        gridEl.hidden = false;
+
+        console.log('[zm-fc] v' + VERSION, roleKey, {
+          pool: loaded.pool.length,
+          period: period,
+          pageOfCycle: (period % pages) + 1 + ' of ' + pages,
+          cadence: cadence,
+          clock: loaded.serverTime ? 'connector server_time' : 'device'
+        });
+      } catch (error) {
+        if (seq !== renderSeq) return;
+        statusEl.textContent = 'Could not load champions.';
+        console.error('[zm-fc] connector request failed:', error);
+      }
+    }
+
+    await render(sdk.getProps());
+    sdk.on('propsChanged', function (newProps) { render(newProps); });
+  }
+</script>

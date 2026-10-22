@@ -22,6 +22,98 @@
         "entry": "content.html"
       },
       "type": "servicenow-cases"
+    },
+    {
+      "title": "Featured Champions",
+      "description": "Grid of community champions that rotates on a fixed date-indexed schedule (no stored state). Reads the 'CC Users - Champions List' connector once per champion role.",
+      "category": "Community",
+      "source": {
+        "path": "widgets/zoom-featured-champions/dist",
+        "entry": "content.html"
+      },
+      "configuration": {
+        "properties": [
+          {
+            "name": "title",
+            "type": "text",
+            "label": "Widget Title",
+            "defaultValue": "Featured Champions",
+            "rules": {
+              "maxLength": 80
+            }
+          },
+          {
+            "name": "role",
+            "type": "select",
+            "label": "Champions Shown",
+            "defaultValue": "all",
+            "options": [
+              {
+                "value": "all",
+                "label": "All champions (mixed)"
+              },
+              {
+                "value": "customer",
+                "label": "Customer champions only"
+              },
+              {
+                "value": "employee",
+                "label": "Employee champions only"
+              },
+              {
+                "value": "partner",
+                "label": "Partner champions only"
+              }
+            ]
+          },
+          {
+            "name": "limit",
+            "type": "number",
+            "label": "Champions Per Period",
+            "description": "How many champions are featured at a time. View More reveals the next set of this size.",
+            "defaultValue": 20,
+            "rules": {
+              "required": true,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cadence",
+            "type": "select",
+            "label": "Rotation Cadence",
+            "defaultValue": "weekly",
+            "options": [
+              {
+                "value": "weekly",
+                "label": "Weekly"
+              },
+              {
+                "value": "monthly",
+                "label": "Monthly"
+              }
+            ]
+          },
+          {
+            "name": "anchor_date",
+            "type": "text",
+            "label": "Rotation Anchor Date",
+            "description": "YYYY-MM-DD. Period 1 starts on this date. Set once at launch; changing it resets the schedule.",
+            "defaultValue": "2026-09-07",
+            "rules": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          }
+        ]
+      },
+      "defaultConfig": {
+        "title": "Featured Champions",
+        "role": "all",
+        "limit": 20,
+        "cadence": "weekly",
+        "anchor_date": "2026-09-07"
+      },
+      "type": "zoom-featured-champions"
     }
   ],
   "scripts": [
