@@ -244,7 +244,7 @@
 </section>
 
 <script type="module">
-  const VERSION = '0.2.0';
+  const VERSION = '0.2.1';
   const CONNECTOR = 'cc-users-champions-list';
   // Loaded only when the platform has not already exposed WidgetServiceSDK.
   const SDK_URL = 'https://static.customer-hub.northpass.com/widget-sdk/latest/index.umd.js';
@@ -372,7 +372,11 @@
     spread.sort(function (a, b) {
       return a.at - b.at || Number(a.champion.userid) - Number(b.champion.userid);
     });
-    return { pool: spread.map(function (s) { return s.champion; }), serverTime: serverTime };
+    return {
+      pool: spread.map(function (s) { return s.champion; }),
+      serverTime: serverTime,
+      perRole: results.map(function (r) { return r.role.name + ': ' + r.items.length; })
+    };
   }
 
   function loadSdk() {
@@ -537,6 +541,7 @@
 
       try {
         const roles = resolveRoles(props, roleKey);
+        console.info('[zm-fc] v' + VERSION + ' loading', { props: props, roles: roles.map(function (r) { return r.name; }) });
         if (!roles.length) {
           statusEl.textContent = 'No champion roles configured.';
           return;
@@ -548,6 +553,7 @@
 
         if (!loaded.pool.length) {
           statusEl.textContent = 'No champions to show yet.';
+          console.warn('[zm-fc] v' + VERSION + ' no champions returned', { perRole: loaded.perRole });
           return;
         }
 
@@ -560,7 +566,7 @@
         gridEl.hidden = false;
 
         console.log('[zm-fc] v' + VERSION, roleKey, {
-          roles: roles.map(function (r) { return r.name; }),
+          perRole: loaded.perRole,
           pool: loaded.pool.length,
           period: period,
           pageOfCycle: (period % pages) + 1 + ' of ' + pages,
