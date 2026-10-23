@@ -25,6 +25,7 @@
   .zm-fc {
     --zm-fc-navy: #00053D;
     --zm-fc-blue: #0B5CFF;
+    --zm-fc-blue-light: #3D7DFF;
     --zm-fc-btn-navy: #1A2C8F;
     --zm-fc-orange: #F26B1D;
     --zm-fc-maroon: #B42318;
@@ -36,7 +37,9 @@
     flex-direction: column;
     align-items: center;
     gap: 60px; /* Figma section padding: 60 above and below the card grid */
-    font-family: var(--config--main-font-base-stack, "Inter", system-ui, -apple-system, "Segoe UI", sans-serif);
+    /* Set directly: the community's --config--main-font-base-stack is not usable in every
+       community and an unusable var() silently falls back to the browser's serif default. */
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: var(--zm-fc-text);
   }
   .zm-fc *, .zm-fc *::before, .zm-fc *::after { box-sizing: inherit; }
@@ -206,11 +209,26 @@
     font-size: 9px;
     font-weight: 600;
     text-decoration: none;
-    transition: box-shadow 0.15s ease;
+    transition: background-color 0.15s ease;
   }
-  /* Keep the Figma colour on hover; signal interactivity with a soft shadow only. */
-  .zm-fc__profile:hover { box-shadow: 0 2px 6px rgba(26, 44, 143, 0.35); }
-  .zm-fc__profile:focus-visible { outline: 2px solid var(--zm-fc-blue); outline-offset: 2px; }
+  /* Scoped under .zm-fc with every link state so the community theme's a / a:hover
+     colours and fonts (which reach into the shadow root) can't override the button. */
+  .zm-fc a.zm-fc__profile,
+  .zm-fc a.zm-fc__profile:link,
+  .zm-fc a.zm-fc__profile:visited {
+    color: #fff;
+    font-family: inherit;
+    text-decoration: none;
+  }
+  /* Hover: Zoom blue, white text. Lighter than the resting navy, never darker. */
+  .zm-fc a.zm-fc__profile:hover,
+  .zm-fc a.zm-fc__profile:focus-visible,
+  .zm-fc a.zm-fc__profile:active {
+    background: var(--zm-fc-blue);
+    color: #fff;
+    text-decoration: none;
+  }
+  .zm-fc a.zm-fc__profile:focus-visible { outline: 2px solid var(--zm-fc-blue-light); outline-offset: 2px; }
 
   /* ── Show more ── */
   .zm-fc__more {
@@ -226,11 +244,15 @@
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: box-shadow 0.15s ease;
+    transition: background-color 0.15s ease;
   }
-  /* Same as View profile: keep the Figma colour, soft shadow only. */
-  .zm-fc__more:hover { box-shadow: 0 2px 8px rgba(11, 92, 255, 0.35); }
-  .zm-fc__more:focus-visible { outline: 2px solid var(--zm-fc-navy); outline-offset: 2px; }
+  /* Hover: a lighter Zoom blue, never darker. */
+  .zm-fc .zm-fc__more:hover,
+  .zm-fc .zm-fc__more:focus-visible {
+    background: var(--zm-fc-blue-light);
+    color: #fff;
+  }
+  .zm-fc .zm-fc__more:focus-visible { outline: 2px solid var(--zm-fc-blue-light); outline-offset: 2px; }
 
   /* ── Responsive ── */
   /* 4 columns (Figma) down to a 1180px-wide widget, i.e. normal laptops.
@@ -263,7 +285,7 @@
 </div>
 
 <script type="module">
-  const VERSION = '0.2.1';
+  const VERSION = '0.2.2';
   const CONNECTOR = 'cc-users-champions-list';
   // Loaded only when the platform has not already exposed WidgetServiceSDK.
   const SDK_URL = 'https://static.customer-hub.northpass.com/widget-sdk/latest/index.umd.js';
